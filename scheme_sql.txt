@@ -1,0 +1,136 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table Exhibits {
+  exhibit_id integer [primary key]
+  title varchar
+  short_desc varchar[100]
+  long_desc varchar[300]
+  start_date date
+  final_date date
+  branding varchar //PEUT ETRE
+}
+
+Table Images {
+  image_id integer [primary key]
+  exhibit_id integer
+  alt_text varchar[100]
+  img image
+}
+
+
+Table Tags {
+  tag_id integer [primary key]  
+  exhibit_id integer
+}
+
+Table Eras{
+  era_id integer 
+  era_name varchar[100]
+}
+Table Themes{
+  theme_id integer
+  thm_name varchar[100]
+}
+
+Table TagEra{
+  tag_id integer 
+  era_id integer
+}
+
+Table TagTheme{
+  tag_id integer
+  theme_id integer
+}
+
+Table QR_code{
+  QR_id integer [primary key]
+  exhibit_id integer
+  room_id integer
+  QR_img image
+}
+
+Table Room{
+  room_id integer [primary key]
+  name varchar[100]
+}
+
+Table Room_Exhibit{
+  room_id integer
+  exhibit_id integer
+}
+
+Table Room_connection{
+  room1_id integer
+  room2_id integer
+}
+
+Table Session{
+  session_id integer [primary key]
+}
+
+Table Feedback{
+  feedback_id integer [primary key]
+  exhibit_id integer
+  session_id integer
+  comment varchar[200]
+  rate integer 
+  date DATE
+}
+
+Table Rotation_exhibits{
+  rotation_id integer [primary key]
+  exhibit1_id integer
+  ehibit2_id integer
+}
+
+Table Rotation_Session_Time{
+  rotation_id integer
+  session_id integer
+  room_id integer
+  exhibit_id integer
+  time timestamp
+  date date
+}
+
+Ref: Exhibits.exhibit_id < Images.exhibit_id
+Ref: Exhibits.exhibit_id < Tags.exhibit_id
+
+
+
+
+Ref: "TagEra"."tag_id" < "Tags"."tag_id"
+
+Ref: "TagEra"."era_id" < "Eras"."era_id"
+
+Ref: "TagTheme"."tag_id" < "Tags"."tag_id"
+
+Ref: "TagTheme"."theme_id" < "Themes"."theme_id"
+
+Ref: "Exhibits"."exhibit_id" < "QR_code"."exhibit_id"
+
+Ref: "QR_code"."room_id" < "Room"."room_id"
+
+Ref: "Exhibits"."exhibit_id" < "Room_Exhibit"."exhibit_id"
+
+Ref: "Room_Exhibit"."room_id" < "Room"."room_id"
+
+Ref: "Room_connection"."room2_id" < "Room"."room_id"
+
+Ref: "Room_connection"."room1_id" < "Room"."room_id"
+
+Ref: "Rotation_exhibits"."exhibit1_id" < "Exhibits"."exhibit_id"
+
+Ref: "Rotation_exhibits"."ehibit2_id" < "Exhibits"."exhibit_id"
+
+Ref: "Rotation_Session_Time"."rotation_id" < "Rotation_exhibits"."rotation_id"
+
+Ref: "Rotation_Session_Time"."session_id" < "Session"."session_id"
+
+Ref: "Rotation_Session_Time"."room_id" < "Room"."room_id"
+
+Ref: "Rotation_Session_Time"."exhibit_id" < "Exhibits"."exhibit_id"
+
+Ref: "Feedback"."exhibit_id" < "Exhibits"."exhibit_id"
+
+Ref: "Feedback"."session_id" < "Session"."session_id"
