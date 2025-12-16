@@ -1,16 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:mssql_connection/mssql_connection.dart';
+import 'package:postgres/postgres.dart';
 
-void main() {
-  MssqlConnection mssqlConnection = MssqlConnection.getInstance();
-  bool isConnected = await mssqlConnection.connect(
-    ip: '127.0.0.1',
-    port: '8080',
-    databaseName: 'museum_DB',
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final connection = PostgreSQLConnection(
+    'localhost',
+    5432,
+    'museum_DB',
     username: 'admin',
     password: 'eaeaoh',
-    timeoutInSeconds: 15,
-);
+  );
+
+  try {
+    await connection.open();
+    print('Postgres: connection opened');
+  } catch (e, st) {
+    print('Postgres: connection failed -> $e');
+    print(st);
+  }
+
+  //
+  // MssqlConnection mssqlConnection = MssqlConnection.getInstance();
+  // bool isConnected = await mssqlConnection.connect(
+  //  ip: '127.0.0.1',
+  //  port: '8080',
+  //  databaseName: 'museum_DB',
+  //  username: 'admin',
+  //  password: 'eaeaoh',
+  //  timeoutInSeconds: 15,
+  // );
+
   runApp(const MyApp());
 }
 
