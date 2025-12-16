@@ -3,15 +3,35 @@
 -- 10.12.2025
 -- Description : Create all the table as the scheme (except for type IMG column, it doesn't exist so we use PATH). Made with the docker's container we saw in course + beekeper
 
+CREATE TABLE Short_Desc (
+  id INT,
+  FR VARCHAR[100],
+  EN VARCHAR[100],
+  IT VARCHAR[100],
+  DE VARCHAR[100],
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE Long_Desc (
+  id INT,
+  FR VARCHAR[300],
+  EN VARCHAR[300],
+  IT VARCHAR[300],
+  DE VARCHAR[300],
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE Exhibits (
   exhibit_id INT,
   title VARCHAR[50],
-  short_desc VARCHAR[100],
-  long_desc VARCHAR[300],
+  short_desc_id INT,
+  long_desc_id INT,
   start_date DATE,
   final_date DATE,
   branding VARCHAR[100],
-  PRIMARY KEY (exhibit_id)
+  PRIMARY KEY (exhibit_id),
+  FOREIGN KEY (short_desc_id) REFERENCES Short_Desc(id),
+  FOREIGN KEY (long_desc_id) REFERENCES Long_Desc(id)
 );
 
 CREATE TABLE Room (
@@ -67,13 +87,19 @@ CREATE TABLE Tags (
 
 CREATE TABLE Eras (
   era_id INT,
-  era_name VARCHAR[100],
+  era_name_FR VARCHAR[100],
+  era_name_EN VARCHAR[100],
+  era_name_DE VARCHAR[100],
+  era_name_IT VARCHAR[100],
   PRIMARY KEY (era_id)
 );
 
 CREATE TABLE Themes (
   theme_id INT,
-  thm_name VARCHAR[100],
+  thm_name_FR VARCHAR[100],
+  thm_name_EN VARCHAR[100],
+  thm_name_DE VARCHAR[100],
+  thm_name_IT VARCHAR[100],
   PRIMARY KEY (theme_id)
 );
 
