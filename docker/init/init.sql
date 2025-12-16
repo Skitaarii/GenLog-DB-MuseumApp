@@ -5,30 +5,29 @@
 
 CREATE TABLE Short_Desc (
   id INT,
-  FR VARCHAR[100],
-  EN VARCHAR[100],
-  IT VARCHAR[100],
-  DE VARCHAR[100],
+  FR VARCHAR(100),
+  EN VARCHAR(100),
+  IT VARCHAR(100),
+  DE VARCHAR(100),
   PRIMARY KEY (id)
 );
 
 CREATE TABLE Long_Desc (
   id INT,
-  FR VARCHAR[300],
-  EN VARCHAR[300],
-  IT VARCHAR[300],
-  DE VARCHAR[300],
+  FR VARCHAR(300),
+  EN VARCHAR(300),
+  IT VARCHAR(300),
+  DE VARCHAR(300),
   PRIMARY KEY (id)
 );
 
 CREATE TABLE Exhibits (
   exhibit_id INT,
-  title VARCHAR[50],
+  title VARCHAR(50),
   short_desc_id INT,
   long_desc_id INT,
   start_date DATE,
   final_date DATE,
-  branding VARCHAR[100],
   PRIMARY KEY (exhibit_id),
   FOREIGN KEY (short_desc_id) REFERENCES Short_Desc(id),
   FOREIGN KEY (long_desc_id) REFERENCES Long_Desc(id)
@@ -36,7 +35,7 @@ CREATE TABLE Exhibits (
 
 CREATE TABLE Room (
   room_id INT,
-  name VARCHAR[100],
+  name VARCHAR(100),
   PRIMARY KEY (room_id)
 );
 
@@ -72,7 +71,7 @@ CREATE TABLE QR_Code (
 CREATE TABLE Images (
   image_id INT,
   exhibit_id INT,
-  alt_text VARCHAR[100],
+  alt_text VARCHAR(100),
   img_path path,
   PRIMARY KEY (image_id),
   FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id)
@@ -87,19 +86,19 @@ CREATE TABLE Tags (
 
 CREATE TABLE Eras (
   era_id INT,
-  era_name_FR VARCHAR[100],
-  era_name_EN VARCHAR[100],
-  era_name_DE VARCHAR[100],
-  era_name_IT VARCHAR[100],
+  era_name_FR VARCHAR(100),
+  era_name_EN VARCHAR(100),
+  era_name_DE VARCHAR(100),
+  era_name_IT VARCHAR(100),
   PRIMARY KEY (era_id)
 );
 
 CREATE TABLE Themes (
   theme_id INT,
-  thm_name_FR VARCHAR[100],
-  thm_name_EN VARCHAR[100],
-  thm_name_DE VARCHAR[100],
-  thm_name_IT VARCHAR[100],
+  thm_name_FR VARCHAR(100),
+  thm_name_EN VARCHAR(100),
+  thm_name_DE VARCHAR(100),
+  thm_name_IT VARCHAR(100),
   PRIMARY KEY (theme_id)
 );
 
@@ -142,7 +141,7 @@ CREATE TABLE Feedback (
   feedback_id SERIAL,
   exhibit_id INT,
   session_id INT,
-  comment VARCHAR[200],
+  comment VARCHAR(200),
   rating INT,
   made_at TIMESTAMP,
   PRIMARY KEY (feedback_id),
@@ -161,7 +160,7 @@ CREATE TABLE Related_exhibits (
 
 CREATE TABLE Itineraries (
   itinerary_id INT,
-  title VARCHAR[50],
+  title VARCHAR(50),
   PRIMARY KEY (itinerary_id)
 );
 
