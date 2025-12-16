@@ -19,22 +19,13 @@ Future<void> main() async {
     print('Postgres: connection failed -> $e');
     print(st);
   }
-
-  //
-  // MssqlConnection mssqlConnection = MssqlConnection.getInstance();
-  // bool isConnected = await mssqlConnection.connect(
-  //  ip: '127.0.0.1',
-  //  port: '8080',
-  //  databaseName: 'museum_DB',
-  //  username: 'admin',
-  //  password: 'eaeaoh',
-  //  timeoutInSeconds: 15,
-  // );
-
+  
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+
+
   const MyApp({super.key});
 
   // This widget is the root of your application.
