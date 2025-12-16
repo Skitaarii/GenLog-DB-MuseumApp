@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:postgres/postgres.dart';
+import 'package:flutter/foundation.dart';
+
+late PostgreSQLConnection connection;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final connection = PostgreSQLConnection(
+  connection = PostgreSQLConnection(
     'localhost',
     5432,
     'museum_DB',
@@ -19,7 +22,7 @@ Future<void> main() async {
     print('Postgres: connection failed -> $e');
     print(st);
   }
-  
+
   runApp(const MyApp());
 }
 
@@ -49,7 +52,7 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
@@ -77,13 +80,26 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
-  void _incrementCounter() {
+  Future<void> _incrementCounter() async {
+    // Run the async DB query outside setState
+    try {
+      var result = await connection.query(
+        'INSERT INTO exhibits(title, start_date, final_date, branding) VALUES (@title, @start_date, @final_date, @branding)',
+        substitutionValues: {
+          'title': 'ALLAN LE GRAND PIED',
+          'start_date': '2024-06-01',
+          'final_date': '2024-12-31',
+          'branding': 'Allan le grand pied est une exposition sur les pieds.',
+        },
+      );
+      print('Query result: $result');
+    } catch (e, st) {
+      print('Query failed: $e');
+      print(st);
+    }
+
+    // Update UI state synchronously
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
       _counter++;
     });
   }
@@ -123,7 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
           // action in the IDE, or press "p" in the console), to see the
           // wireframe for each widget.
-          mainAxisAlignment: .center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text('You have pushed the button this many times:'),
             Text(
