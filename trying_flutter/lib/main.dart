@@ -3,6 +3,15 @@ import 'package:mssql_connection/mssql_connection.dart';
 
 
 void main() {
+  MssqlConnection mssqlConnection = MssqlConnection.getInstance();
+  bool isConnected = await mssqlConnection.connect(
+    ip: '127.0.0.1',
+    port: '8080',
+    databaseName: 'museum_DB',
+    username: 'admin',
+    password: 'eaeaoh',
+    timeoutInSeconds: 15,
+);
   runApp(const MyApp());
 }
 
