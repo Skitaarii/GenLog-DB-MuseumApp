@@ -21,18 +21,22 @@ CREATE TABLE Room (
 );
 
 CREATE TABLE Room_connection (
+  id INT serial,
   room1_id INT,
   room2_id INT,
   FOREIGN KEY (room1_id) REFERENCES Room(room_id),
-  FOREIGN KEY (room2_id) REFERENCES Room(room_id)
+  FOREIGN KEY (room2_id) REFERENCES Room(room_id),
+  PRIMARY KEY (id)
 );
 
 
 CREATE TABLE Room_Exhibit (
+  id INT serial,
   room_id INT,
   exhibit_id INT,
   FOREIGN KEY (room_id) REFERENCES Room(room_id),
-  FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id)
+  FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id), 
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE QR_code (
@@ -74,25 +78,30 @@ CREATE TABLE Themes (
 );
 
 CREATE TABLE TagEra (
+  id INT serial,
   tag_id INT,
   era_id INT,
   FOREIGN KEY (tag_id) REFERENCES Tags(tag_id),
-  FOREIGN KEY (era_id) REFERENCES Eras(era_id)
+  FOREIGN KEY (era_id) REFERENCES Eras(era_id),
+  PRIMARY KEY(id)
 );
 
 CREATE TABLE TagTheme (
+  id INT serial,
   tag_id INT,
   theme_id INT,
   FOREIGN KEY (tag_id) REFERENCES Tags(tag_id),
-  FOREIGN KEY (theme_id) REFERENCES Themes(theme_id)
+  FOREIGN KEY (theme_id) REFERENCES Themes(theme_id),
+  PRIMARY KEY(id)
 );
 
 CREATE TABLE Session (
-  session_id INT,
+  session_id INT serial,
   PRIMARY KEY (session_id)
 );
 
 CREATE TABLE QR_Scan (
+  id INT serial,
   session_id INT,
   room_id INT,
   exhibit_id INT,
@@ -100,10 +109,11 @@ CREATE TABLE QR_Scan (
   FOREIGN KEY (session_id) REFERENCES Session(session_id),
   FOREIGN KEY (room_id) REFERENCES Room(room_id),
   FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id)
+  PRIMARY KEY(id)
 );
 
 CREATE TABLE Feedback (
-  feedback_id INT,
+  feedback_id INT serial,
   exhibit_id INT,
   session_id INT,
   comment VARCHAR[200],
@@ -115,7 +125,7 @@ CREATE TABLE Feedback (
 );
 
 CREATE TABLE Related_exhibits (
-  relation_id INT,
+  relation_id INT serial,
   exhibit1_id INT,
   exhibit2_id INT,
   PRIMARY KEY (relation_id),
