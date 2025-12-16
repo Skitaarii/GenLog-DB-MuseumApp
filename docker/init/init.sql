@@ -4,7 +4,7 @@
 -- Description : Create all the table as the scheme (except for type IMG column, it doesn't exist so we use PATH). Made with the docker's container we saw in course + beekeper
 
 CREATE TABLE Short_Desc (
-  id INT,
+  id SERIAL,
   FR VARCHAR(100),
   EN VARCHAR(100),
   IT VARCHAR(100),
@@ -13,7 +13,7 @@ CREATE TABLE Short_Desc (
 );
 
 CREATE TABLE Long_Desc (
-  id INT,
+  id SERIAL,
   FR VARCHAR(300),
   EN VARCHAR(300),
   IT VARCHAR(300),
@@ -22,7 +22,7 @@ CREATE TABLE Long_Desc (
 );
 
 CREATE TABLE Exhibits (
-  exhibit_id INT,
+  exhibit_id SERIAL,
   title VARCHAR(50),
   short_desc_id INT,
   long_desc_id INT,
@@ -34,7 +34,7 @@ CREATE TABLE Exhibits (
 );
 
 CREATE TABLE Room (
-  room_id INT,
+  room_id SERIAL,
   name VARCHAR(100),
   PRIMARY KEY (room_id)
 );
@@ -59,7 +59,7 @@ CREATE TABLE Room_Exhibit (
 );
 
 CREATE TABLE QR_Code (
-  QR_id INT,
+  QR_id SERIAL,
   exhibit_id INT,
   room_id INT,
   QR_img_path  path,
@@ -69,7 +69,7 @@ CREATE TABLE QR_Code (
 );
 
 CREATE TABLE Images (
-  image_id INT,
+  image_id SERIAL,
   exhibit_id INT,
   alt_text VARCHAR(100),
   img_path path,
@@ -78,14 +78,14 @@ CREATE TABLE Images (
 );
 
 CREATE TABLE Tags (
-  tag_id INT,
+  tag_id SERIAL,
   exhibit_id INT,
   PRIMARY KEY (tag_id),
   FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id)
 );
 
 CREATE TABLE Eras (
-  era_id INT,
+  era_id SERIAL,
   era_name_FR VARCHAR(100),
   era_name_EN VARCHAR(100),
   era_name_DE VARCHAR(100),
@@ -94,7 +94,7 @@ CREATE TABLE Eras (
 );
 
 CREATE TABLE Themes (
-  theme_id INT,
+  theme_id SERIAL,
   thm_name_FR VARCHAR(100),
   thm_name_EN VARCHAR(100),
   thm_name_DE VARCHAR(100),
@@ -159,7 +159,7 @@ CREATE TABLE Related_exhibits (
 );
 
 CREATE TABLE Itineraries (
-  itinerary_id INT,
+  itinerary_id SERIAL,
   title VARCHAR(50),
   PRIMARY KEY (itinerary_id)
 );
