@@ -123,27 +123,5 @@ flutter run
 * Check logs for correct operation
 
 
-## Flutter
-### Installation
-1) Install Flutter SDK : https://flutter.dev/docs/get-started/install
-2) Add Flutter to the `PATH`
-3) Verify installation : run `flutter doctor`
-
-### Visual Studio Code 
-Install Flutter and Dart plugins.
-
-### Android SDK
-1) Install via Android Studio or standalone
-2) Install 
-
-### Android emulator 
-
-Has to be already done :
-1) **Flutter** installed and configured ( run `flutter doctor` should not display any errors) ;
-2) **Android SDK** installed (`platform-tools`, `cmdline-tools` and `emulator` included) ;
-3) **ADB** accessible from the terminal (add `platform-tools` to the PATH) ;
-4) **AVD (Android Virtual Device)** configured in Android SDK
-
-#### Launch emulator
 
 

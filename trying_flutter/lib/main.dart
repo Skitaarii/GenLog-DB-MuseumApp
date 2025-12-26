@@ -7,7 +7,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final connection = PostgreSQLConnection(
-    'localhost', //for emulation : '10.0.2.2' / for physical device : 'localhost'
+    '10.0.2.2', //for emulation : '10.0.2.2' / for physical device : 'localhost'
     5432,
     'museum_DB',
     username: 'admin',
