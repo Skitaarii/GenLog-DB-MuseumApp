@@ -58,6 +58,8 @@ class EditorsExhibitsPage extends StatelessWidget {
                     DataCell(Text(e.title)),
                     DataCell(Text(formatDate(e.startDate))),
                     DataCell(Text(formatDate(e.finalDate))),
+                    //DataCell(Text(formatDate(e.startDate))),
+                    //DataCell(Text(formatDate(e.finalDate))),
                   ],
                 );
               }).toList(),

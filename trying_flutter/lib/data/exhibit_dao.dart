@@ -64,8 +64,8 @@ class ExhibitDao {
       return Exhibit(
         exhibit_id: row[0] as int,
         title : row[1] as String,
-        startDate: row[4] as DateTime?,
-        finalDate: row[5] as DateTime?,
+        startDate: row[2] as DateTime?,
+        finalDate: row[3] as DateTime?,
       );
     }).toList();
   }
