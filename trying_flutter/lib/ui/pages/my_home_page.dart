@@ -1,3 +1,7 @@
+// Veuillet Gaëtan
+// 2025
+// Description : Home page (a test page), has to be deleted
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:trying_flutter/data/exhibit_dao.dart';
@@ -27,18 +31,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _incrementCounter() async {
     try {
-      await widget.exhibitDao.insertExhibit(
+      /*await widget.exhibitDao.insertExhibit(
         title: 'BENNO EXHIBIT',
         startDate: DateTime(2024, 6, 1),
         finalDate: DateTime(2024, 12, 31),
       );
 
+      
       await widget.exhibitDao.update(
         exhibitId: 1,
         title: 'BENNO EXHIBIT UPDATED',
         startDate: DateTime(2025, 1, 1),
         finalDate: DateTime(2026, 1, 31),
       );
+
+      */
 
       final result = await widget.exhibitDao.getExhibitById(1);
       debugPrint('Query results: $result');
@@ -54,7 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final title = _titleController.text.trim();
     if (title.isEmpty) return;
 
-    await widget.exhibitDao.insertExhibit(
+    /*await widget.exhibitDao.insertExhibit(
       title: title,
       startDate: _startController.text.isEmpty
           ? null
@@ -63,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ? null
           : DateTime.parse(_finalController.text),
     );
-
+*/
     _titleController.clear();
     _startController.clear();
     _finalController.clear();
