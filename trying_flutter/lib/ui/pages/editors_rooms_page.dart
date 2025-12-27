@@ -1,10 +1,10 @@
 // Veuillet Gaëtan
 // 2025
-// Description : Exhibit page adding/modifying/deleting for admin
+// Description : Room page adding/modifying/deleting for admin
 
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/data/exhibit_dao.dart';
-import 'package:trying_flutter/data/exhibit.dart';
+import 'package:trying_flutter/data/room_dao.dart';
+import 'package:trying_flutter/data/room.dart';
 import 'package:intl/intl.dart';
 
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');
@@ -14,108 +14,49 @@ String formatDate(DateTime? date) {
   return _dateFormatter.format(date);
 }
 
-class EditorsExhibitsPage extends StatefulWidget {
-  final ExhibitDao exhibitDao;
+class EditorsRoomsPage extends StatefulWidget {
+  final RoomDao roomDao;
 
-  const EditorsExhibitsPage({
+  const EditorsRoomsPage({
     super.key,
-    required this.exhibitDao,
+    required this.roomDao,
   });
 
   @override
-  State<EditorsExhibitsPage> createState() => _EditorsExhibitsPageState();
+  State<EditorsRoomsPage> createState() => _EditorsRoomsPageState();
 }
 
-class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
-  late Future<List<Exhibit>> _exhibitsFuture;
+class _EditorsRoomsPageState extends State<EditorsRoomsPage> {
+  late Future<List<Room>> _roomsFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadExhibits();
+    _loadRooms();
   }
 
-  void _loadExhibits() {
-    _exhibitsFuture = widget.exhibitDao.getAllExhibits();
+  void _loadRooms() {
+    _roomsFuture = widget.roomDao.getAllRooms();
   }
 
-  Future<void> _openAddExhibitDialog() async {
-    final titleController = TextEditingController();
-    DateTime? startDate;
-    DateTime? finalDate;
-
-    String shortDescText = '';
-    String longDescText = '';
-
-    final shortDescController = TextEditingController(text: shortDescText);
-    final longDescController = TextEditingController(text: longDescText);
+  Future<void> _openAddRoomDialog() async {
+    final name = TextEditingController();
 
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('New exhibit'),
+          title: const Text('New room'),
           content: StatefulBuilder(
             builder: (context, setDialogState) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Title'),
+                    controller: name,
+                    decoration: const InputDecoration(labelText: 'Name'),
                   ),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: shortDescController,
-                    decoration: const InputDecoration(labelText: 'Short description'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: longDescController,
-                    decoration: const InputDecoration(labelText: 'Long description'),
-                    maxLines: 3,
-                  ),
-                  // DATE DÉBUT
-                  ListTile(
-                    title: Text(
-                      startDate == null
-                          ? 'Start date'
-                          : 'Start : ${formatDate(startDate)}',
-                    ),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                        initialDate: DateTime.now(),
-                      );
-                      if (picked != null) {
-                        setDialogState(() => startDate = picked);
-                      }
-                    },
-                  ),
-
-                  // DATE FIN
-                  ListTile(
-                    title: Text(
-                      finalDate == null
-                          ? 'End date'
-                          : 'End : ${formatDate(finalDate)}',
-                    ),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                        initialDate: DateTime.now(),
-                      );
-                      if (picked != null) {
-                        setDialogState(() => finalDate = picked);
-                      }
-                    },
-                  ),
                 ],
               );
             },
@@ -127,24 +68,16 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (titleController.text.isEmpty) return;
+                if (name.text.isEmpty) return;
 
-                final short_desc = await widget.exhibitDao.getOrCreateShortDescId(shortDescController.text);
-                final long_desc = await widget.exhibitDao.getOrCreateLongDescId(longDescController.text);
-
-                await widget.exhibitDao.insertExhibit(
-                  title: titleController.text,
-                  startDate: startDate,
-                  finalDate: finalDate,
-                  shortDescId: short_desc,
-                  longDescId: long_desc,
-
+                await widget.roomDao.insertRoom(
+                  name: name.text,
                 );
 
                 Navigator.pop(context);
 
                 setState(() {
-                  _loadExhibits();
+                  _loadRooms();
                 });
               },
               child: const Text('Create'),
@@ -155,8 +88,11 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
     );
   }
 
-  Future<void> _openEditDialog(Exhibit exhibit) async {
-    final titleController = TextEditingController(text: exhibit.title);
+  Future<void> _openEditDialog(Room room) async {
+    print("NOT FINISHED");
+  }
+    /*
+    final name = TextEditingController(text: room.name);
     DateTime? startDate = exhibit.startDate;
     DateTime? finalDate = exhibit.finalDate;
 
@@ -284,14 +220,15 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
       },
     );
   }
+  */
 
 
-  Future<void> _deleteExhibit(Exhibit exhibit) async {
+  Future<void> _deleteExhibit(Room room) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Delete'),
-      content: Text('Delete "${exhibit.title}" ?'),
+      content: Text('Delete "${room.name}" ?'),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
@@ -307,8 +244,8 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
   );
 
   if (confirmed == true) {
-    await widget.exhibitDao.deleteExhibit(exhibit.exhibit_id);
-    setState(() => _loadExhibits());
+    await widget.roomDao.deleteRoom(room.room_id);
+    setState(() => _loadRooms());
   }
   }
 
@@ -316,9 +253,9 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Exhibits')),
-      body: FutureBuilder<List<Exhibit>>(
-        future: _exhibitsFuture,
+      appBar: AppBar(title: const Text('Rooms')),
+      body: FutureBuilder<List<Room>>(
+        future: _roomsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -337,9 +274,9 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
               children: [
                 // ADD BUTTON
                 ElevatedButton.icon(
-                  onPressed: _openAddExhibitDialog,
+                  onPressed: _openAddRoomDialog,
                   icon: const Icon(Icons.add),
-                  label: const Text('Add an exhibit'),
+                  label: const Text('Add a room'),
                 ),
                 const SizedBox(height: 16),
 
@@ -347,16 +284,15 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                 DataTable(
                   columns: const [
                     DataColumn(label: Text('ID')),
-                    DataColumn(label: Text('Title')),
-                    //DataColumn(label: Text('End')),
+                    DataColumn(label: Text('Name')),
                     DataColumn(label: Text('Edit')),
                     DataColumn(label: Text('Delete')),
                   ],
                   rows: exhibits.map((e) {
                     return DataRow(
                       cells: [
-                        DataCell(Text(e.exhibit_id.toString())),
-                        DataCell(Text(e.title)),
+                        DataCell(Text(e.room_id.toString())),
+                        DataCell(Text(e.name)),
                         //DataCell(Text(formatDate(e.finalDate))),
 
                         //EDIT

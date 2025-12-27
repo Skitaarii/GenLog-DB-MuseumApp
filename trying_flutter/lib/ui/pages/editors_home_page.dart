@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:trying_flutter/ui/pages/editors_rooms_page.dart';
 import 'package:trying_flutter/widgets/editors.dart';
 import 'package:trying_flutter/ui/pages/editors_exhibits_page.dart';
 import 'package:trying_flutter/data/exhibit_dao.dart';
+import 'package:trying_flutter/data/room_dao.dart';
 
 class EditorsHomePage extends StatelessWidget {
   final ExhibitDao exhibitDao;
+  final RoomDao roomDao;
+
   const EditorsHomePage({
     super.key,
     required this.exhibitDao,
+    required this.roomDao,
     });
 
   @override
@@ -48,7 +53,14 @@ class EditorsHomePage extends StatelessWidget {
             EditorButton(
               label: 'Rooms',
               onTap: () {
-                // Navigator.push(...)
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditorsRoomsPage(
+                      roomDao: roomDao
+                    ),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 20),

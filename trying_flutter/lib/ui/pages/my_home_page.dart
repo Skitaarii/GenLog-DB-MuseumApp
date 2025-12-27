@@ -5,17 +5,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:trying_flutter/data/exhibit_dao.dart';
+import 'package:trying_flutter/data/room_dao.dart';
 import 'package:trying_flutter/ui/pages/editors_home_page.dart';
 //import 'qrcode_page.dart'; // ici QRViewExample est défini
 
 class MyHomePage extends StatefulWidget {
   final String title;
   final ExhibitDao exhibitDao;
+  final RoomDao roomDao;
 
   const MyHomePage({
     super.key,
     required this.title,
     required this.exhibitDao,
+    required this.roomDao,
   });
 
   @override
@@ -103,6 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 context,
                 MaterialPageRoute(builder: (context) => EditorsHomePage(
                   exhibitDao: widget.exhibitDao,
+                  roomDao: widget.roomDao,
                 )),
               );
             },
