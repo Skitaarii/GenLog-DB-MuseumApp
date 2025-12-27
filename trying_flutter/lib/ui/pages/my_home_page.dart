@@ -33,8 +33,10 @@ class _MyHomePageState extends State<MyHomePage> {
         finalDate: DateTime(2024, 12, 31),
       );
 
-      await widget.exhibitDao.updateFinalDate(
+      await widget.exhibitDao.update(
         exhibitId: 1,
+        title: 'BENNO EXHIBIT UPDATED',
+        startDate: DateTime(2025, 1, 1),
         finalDate: DateTime(2026, 1, 31),
       );
 

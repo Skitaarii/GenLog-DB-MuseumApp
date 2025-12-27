@@ -29,22 +29,41 @@ class ExhibitDao {
     );
   }
 
-  Future<void> updateFinalDate({
+  Future<void> update({
     required int exhibitId,
+    required String title,
+    required DateTime startDate,
     required DateTime finalDate,
+    //required String shortDesc,
+    //required String longDesc,
   }) async {
     await connection.query(
       '''
       UPDATE exhibits
-      SET final_date = @final_date
+      SET 
+          title = @title,
+          start_date = @start_date,
+          final_date = @final_date
       WHERE exhibit_id = @exhibit_id
       ''',
       substitutionValues: {
+        'title': title,
+        'start_date': startDate,
         'final_date': finalDate,
         'exhibit_id': exhibitId,
       },
     );
   }
+
+  Future<void> deleteExhibit(int exhibitId) async {
+    await connection.query(
+      '''
+      DELETE FROM exhibits WHERE exhibit_id = @id
+      ''',
+      substitutionValues: {'id': exhibitId},
+    );
+  }
+
 
   Future<List<List<dynamic>>> getExhibitById(int id) async {
     return await connection.query(
