@@ -2,6 +2,8 @@
 // 2025
 // Description : Room page adding/modifying/deleting for admin
 
+//TODO : EDITING + exhibit per room 
+
 import 'package:flutter/material.dart';
 import 'package:trying_flutter/data/room_dao.dart';
 import 'package:trying_flutter/data/room.dart';
