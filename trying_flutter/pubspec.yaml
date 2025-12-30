@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   postgres: ^2.5.4
+  rename: ^3.1.0
     
   mssql_connection: ^3.0.0
 

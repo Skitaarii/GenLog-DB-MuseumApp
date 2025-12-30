@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:postgres/postgres.dart';
 import 'package:trying_flutter/data/exhibit_dao.dart';
 import 'package:trying_flutter/data/room_dao.dart';
+import 'package:trying_flutter/ui/pages/editors_home_page.dart';
 import 'package:trying_flutter/ui/pages/my_home_page.dart';
 
 Future<void> main() async {
@@ -26,14 +27,14 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   final ExhibitDao exhibitDao;
   final RoomDao roomDao;
+  
 
   const MyApp({super.key, required this.exhibitDao, required this.roomDao});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MyHomePage(
-        title: 'Flutter Demo Home Page',
+      home: EditorsHomePage(
         exhibitDao: exhibitDao,
         roomDao: roomDao,
       ),
