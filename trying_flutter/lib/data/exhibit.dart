@@ -15,3 +15,13 @@ class Exhibit {
     required this.long_desc_id,
   });
 }
+
+class ExhibitLite {
+  final int exhibit_id;
+  final String title;
+
+  ExhibitLite({
+    required this.exhibit_id,
+    required this.title,
+  });
+}

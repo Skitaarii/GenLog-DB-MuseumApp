@@ -1,120 +1,130 @@
 //@ : Veuillet Gaëtan
 // 2025
-// Data Access Object for User entity
-// WHAT DA HELL IS GOING ON
+// Data access Object for room
 
 import 'package:postgres/postgres.dart';
 import 'package:trying_flutter/data/room.dart';
+import 'package:trying_flutter/data/exhibit.dart';
+
+
 
 class RoomDao {
   final PostgreSQLConnection connection;
 
   RoomDao(this.connection);
 
-  Future<void> insertRoom({
+  Future<int> insertRoom({
     required String name,
   }) async {
-    await connection.query(
+    // Insert and return the new room id
+    final result = await connection.query(
       '''
       INSERT INTO room(name)
       VALUES (@name)
+      RETURNING room_id
       ''',
       substitutionValues: {
         'name': name,
       },
     );
+    // return the inserted id
+    return result.first[0] as int;
   }
 
-  /*
-  Future<void> insertExhibit({
-    required String title,
-    DateTime? startDate,
-    DateTime? finalDate,
-    required int shortDescId,
-    required int longDescId,
-  }) async {
-    await connection.query(
-      '''
-      INSERT INTO exhibits(title, short_desc_id, long_desc_id, start_date, final_date)
-      VALUES (@title, @short_desc_id, @long_desc_id, @start_date, @final_date)
-      ''',
-      substitutionValues: {
-        'title': title,
-        'short_desc_id': shortDescId,
-        'long_desc_id': longDescId,
-        'start_date': startDate,
-        'final_date': finalDate,
-      },
-    );
-  }
 
-*/
-/*
-Future<int> getOrCreateShortDescId(String text) async {
-  final result = await connection.query(
-    'SELECT id FROM short_desc WHERE en = @en', 
-    substitutionValues: {'en': text},
+Future<void> updateRoom(int roomId, {required String name}) async {
+  await connection.execute(
+    'UPDATE Room SET name = @name WHERE room_id = @roomId',
+    substitutionValues: {'name': name, 'roomId': roomId},
   );
-  if (result.isNotEmpty) return result.first[0] as int;
-
-  final insert = await connection.query(
-    'INSERT INTO short_desc(en) VALUES (@en) RETURNING id',
-    substitutionValues: {'en': text},
-  );
-  return insert.first[0] as int;
 }
 
-Future<int> getOrCreateLongDescId(String text) async {
-  final result = await connection.query(
-    'SELECT id FROM long_desc WHERE en = @en', 
-    substitutionValues: {'en': text},
+Future<void> updateRoomExhibits(int roomId, List<int> exhibitIds) async {
+  // Supprime les anciennes associations
+  await connection.execute(
+    'DELETE FROM Room_Exhibit WHERE room_id = @roomId',
+    substitutionValues: {'roomId': roomId},
   );
-  if (result.isNotEmpty) return result.first[0] as int;
-
-  final insert = await connection.query(
-    'INSERT INTO long_desc(en) VALUES (@en) RETURNING id',
-    substitutionValues: {'en': text},
-  );
-  return insert.first[0] as int;
-}
-
-*/
-/*
-  Future<void> update({
-    required int exhibitId,
-    required String title,
-    required DateTime startDate,
-    required DateTime finalDate,
-    required String shortDesc,
-    required String longDesc,
-  }) async {
-    
-    final shortDescId = await getOrCreateShortDescId(shortDesc);
-    final longDescId = await getOrCreateLongDescId(longDesc);
-
-    await connection.query(
-      '''
-      UPDATE exhibits
-      SET 
-          title = @title,
-          start_date = @start_date,
-          final_date = @final_date,
-          short_desc_id = @short_desc_id,
-          long_desc_id = @long_desc_id
-      WHERE exhibit_id = @exhibit_id
-      ''',
-      substitutionValues: {
-        'title': title,
-        'start_date': startDate,
-        'final_date': finalDate,
-        'short_desc_id': shortDescId,
-        'long_desc_id': longDescId,
-        'exhibit_id': exhibitId,
-      },
+  
+  // Ajoute les nouvelles associations
+  for (final exhibitId in exhibitIds) {
+    await connection.execute(
+      'INSERT INTO Room_Exhibit (room_id, exhibit_id) VALUES (@roomId, @exhibitId)',
+      substitutionValues: {'roomId': roomId, 'exhibitId': exhibitId},
     );
   }
+}
 
-  */
+  
+
+  Future<List<RoomWithExhibits>> getRoomsWithExhibits() async {
+  final result = await connection.query('''
+    SELECT r.room_id, r.name, e.exhibit_id, e.title
+    FROM room r
+    LEFT JOIN room_exhibit re ON re.room_id = r.room_id
+    LEFT JOIN exhibits e ON e.exhibit_id = re.exhibit_id
+    ORDER BY r.room_id
+  '''); 
+
+    final Map<int, RoomWithExhibits> rooms = {};
+
+  for (final row in result) {
+    final roomId = row[0] as int;
+    final roomName = row[1] as String;
+
+    rooms.putIfAbsent(
+      roomId,
+      () => RoomWithExhibits(
+        room_id: roomId,
+        name: roomName,
+        exhibits: [],
+      ),
+    );
+
+    if (row[2] != null) {
+      rooms[roomId]!.exhibits.add(
+        ExhibitLite(
+          exhibit_id: row[2] as int,
+          title: row[3] as String,
+        ),
+      );
+    }
+  }
+  return rooms.values.toList();
+}
+
+  //attach multiple exhibits to a room (inserts into room_exhibit)
+  Future<void> insertRoomExhibits(int roomId, List<int> exhibitIds) async {
+    for (final exId in exhibitIds) {
+      await connection.query(
+        '''
+        INSERT INTO room_exhibit(room_id, exhibit_id)
+        VALUES (@room_id, @exhibit_id)
+        ''',
+        substitutionValues: {
+          'room_id': roomId,
+          'exhibit_id': exId,
+        },
+      );
+    }
+  }
+
+  //return a lightweight list of exhibits (id + title)
+  Future<List<ExhibitLite>> getAllExhibits() async {
+    final result = await connection.query(
+      'SELECT exhibit_id, title FROM exhibits ORDER BY exhibit_id',
+    );
+
+    return result.map((row) {
+      return ExhibitLite(
+        exhibit_id: row[0] as int,
+        title: row[1] as String,
+      );
+    }).toList();
+  }
+
+
+
   Future<void> deleteRoom(int roomId) async {
     await connection.query(
       '''
