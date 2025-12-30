@@ -98,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: const Text('Submit'),
           ),
           const SizedBox(height: 20),
-          //bouton pour aller sur la page caméra
+          //Button to go to the camera page -> futur qrcode page
           ElevatedButton(
             onPressed: () {
               print("Navigating to Camera Page");
