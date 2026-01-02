@@ -38,7 +38,8 @@ Before running the project, make sure you have installed and configured:
 
 ---
 
-## Environment Variables
+## setup android emulator on windows
+### Environment Variables
 
 Add to your PATH or verify:
 On Windows:
@@ -48,9 +49,7 @@ $env:PATH += ";C:[YOUR PATH]\platformTools\AndroidSDK\platform-tools"
 ```
 
 
----
-
-## Android SDK Components
+### Android SDK Components
 
 Accept licenses:
 
@@ -64,9 +63,7 @@ Install required packages:
 sdkmanager "platform-tools" "cmdline-tools;latest" "system-images;android-33;google_apis;x86_64"
 ```
 
----
-
-## Create and Launch an AVD
+### Create and Launch an AVD
 
 Create an Android Virtual Device (AVD) using Android Studio or command line.
 Example for Pixel 6 API 33:
@@ -85,6 +82,7 @@ adb devices
 > If `adb` is not recognized, make sure `platform-tools` is in your `PATH`.
 
 ---
+
 ## setup android emulator on mac
 ### download android studio
 go to Settings | Languages & Frameworks
