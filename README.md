@@ -132,6 +132,7 @@ runner -> signing capabilities
 
 ### run simulator
 open simulator -> your device
+
 flutter will detect the device automatically
 
 ---
