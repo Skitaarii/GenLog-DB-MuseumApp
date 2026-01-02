@@ -88,45 +88,55 @@ adb devices
 ## setup android emulator on mac
 ### download android studio
 go to Settings | Languages & Frameworks
+
 download your platform of choice at Android SDK
+
 under SDK Tools, make sure build-tools, platform-tools, command-line tools and emulator are installed
 
 ### set environment variables
 ```unix
 nano ~/.zshrc
 ```
+```nano
 export ANDROID_SDK_ROOT=/Users/[YOUR USER]/Library/Android/sdk
 export ANDROID_HOME=$ANDROID_SDK_ROOT
 export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools
 export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
 export PATH=$PATH:$ANDROID_SDK_ROOT/emulator
+```
 
 ### run emulator
-on Android studio: 
+on Android studio:
+
 More actions -> virtual device manager -> run
 
 flutter will detect the device automatically
 ___
 ## setup ios emulator on mac
-### brew install cocoapods
+brew install cocoapods
 
-### download simulator
-download ios xx
-file -> new simulator 
-create your simulator
+### create simulator
+- download ios xx on Xcode
+- on simulator: file -> new simulator 
+- create your simulator
 
 ### codesign
 if you don't have a developer account:
 go on https://developer.apple.com and create one
+
 open ./ios/Runner.xcworkspace/ from the flutter app directory
-runner -> signing ]capabilities
-  enable automatially manage signing
-  select Team as personal team
+
+runner -> signing capabilities
+- enable automatially manage signing
+- select Team as personal team
+
+! make sure the project isn't in Icloud or code signing will fail.
 
 ### run simulator
 open simulator -> your device
 flutter will detect the device automatically
---
+
+---
 
 ## Prepare the Flutter Project
 
