@@ -520,7 +520,7 @@ class AdminDao {
 
       //8)
       for (int i = 0; i < exhibitIds.length; i++) {
-        //Create a tag for each exhibit
+        //Create a tag for each  exhibit
         final tagResult = await connection.query(
           'INSERT INTO Tags (exhibit_id) VALUES (@exhibit_id) RETURNING tag_id',
           substitutionValues: {'exhibit_id': exhibitIds[i]},
