@@ -84,6 +84,7 @@ adb devices
 ---
 
 ## setup android emulator on mac
+download Java
 ### download android studio
 go to Settings | Languages & Frameworks
 
