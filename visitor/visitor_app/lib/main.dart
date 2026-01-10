@@ -1,12 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:postgres/postgres.dart';
 import 'package:visitor_app/data/exhibit_dao.dart';
 import 'package:visitor_app/data/room_dao.dart';
 import 'package:visitor_app/data/visitor_dao.dart';
+import 'package:visitor_app/data/itinerary_dao.dart'; 
+import 'package:visitor_app/data/favorites_dao.dart';
 import 'package:visitor_app/ui/pages/qr_code_scan_page.dart';
-import 'package:visitor_app/data/qr_code_dao.dart';
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +23,8 @@ Future<void> main() async {
   final exhibitDao = ExhibitDao(connection);
   final roomDao = RoomDao(connection);
   final visitorDao = VisitorDao(connection);
-  final qrCodeDao = QRCodeDao(connection);
+  final itineraryDao = ItineraryDao(connection); 
+  final favoritesDao = FavoritesDao(connection);
 
   //Session for the visitor
   final sessionId = await visitorDao.createNewSession();
@@ -34,7 +34,8 @@ Future<void> main() async {
     exhibitDao: exhibitDao,
     roomDao: roomDao,
     visitorDao: visitorDao,
-    qrCodeDao: qrCodeDao,
+    itineraryDao: itineraryDao,
+    favoritesDao: favoritesDao, 
     sessionId: sessionId,
   ));
 }
@@ -43,7 +44,8 @@ class MyApp extends StatelessWidget {
   final ExhibitDao exhibitDao;
   final RoomDao roomDao;
   final VisitorDao visitorDao;
-  final QRCodeDao qrCodeDao;
+  final ItineraryDao itineraryDao; 
+  final FavoritesDao favoritesDao; 
   final int sessionId;
 
   const MyApp({
@@ -51,7 +53,8 @@ class MyApp extends StatelessWidget {
     required this.exhibitDao,
     required this.roomDao,
     required this.visitorDao,
-    required this.qrCodeDao,
+    required this.itineraryDao, 
+    required this.favoritesDao, 
     required this.sessionId,
   });
 
@@ -60,10 +63,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       home: QRCodeScanPage(
         visitorDao: visitorDao,
-        qrCodeDao: qrCodeDao,
+        itineraryDao: itineraryDao,
+        favoritesDao: favoritesDao, 
         sessionId: sessionId,
       ),
-      
     );
   }
 }

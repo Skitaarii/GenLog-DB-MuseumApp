@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:visitor_app/data/visitor.dart';
 import 'package:visitor_app/data/visitor_dao.dart';
+import 'package:visitor_app/data/favorites_dao.dart';
 import 'package:intl/intl.dart';
 
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');
@@ -19,12 +20,14 @@ String formatDate(DateTime? date) {
 class VisitorExhibitInfoPage extends StatefulWidget {
   final ExhibitDetails exhibitDetails;
   final VisitorDao visitorDao;
+  final FavoritesDao favoritesDao;
   final int sessionId;
 
   const VisitorExhibitInfoPage({
     super.key,
     required this.exhibitDetails,
     required this.visitorDao,
+    required this.favoritesDao,
     required this.sessionId,
   });
 
@@ -33,6 +36,7 @@ class VisitorExhibitInfoPage extends StatefulWidget {
 }
 
 class _VisitorExhibitInfoPageState extends State<VisitorExhibitInfoPage> {
+  bool _isLoadingFavorite = false;
   bool _isFavorite = false;
   int _rating = 0;
   final TextEditingController _commentController = TextEditingController();
@@ -47,6 +51,34 @@ class _VisitorExhibitInfoPageState extends State<VisitorExhibitInfoPage> {
     super.initState();
     _loadAverageRating();
     _loadFeedbacks();
+    _checkIfFavorite();
+  }
+
+    Future<void> _checkIfFavorite() async {
+    setState(() {
+      _isLoadingFavorite = true;
+    });
+
+    try {
+      final isFav = await widget.favoritesDao.isFavorite(
+        sessionId: widget.sessionId,
+        exhibitId: widget.exhibitDetails.exhibit_id,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isFavorite = isFav;
+          _isLoadingFavorite = false;
+        });
+      }
+    } catch (e) {
+      print('Error checking favorite status: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingFavorite = false;
+        });
+      }
+    }
   }
 
   Future<void> _navigateToRelatedExhibit(int exhibitId) async {
@@ -70,6 +102,7 @@ class _VisitorExhibitInfoPageState extends State<VisitorExhibitInfoPage> {
           builder: (context) => VisitorExhibitInfoPage(
             exhibitDetails: relatedExhibitDetails,
             visitorDao: widget.visitorDao,
+            favoritesDao: widget.favoritesDao,
             sessionId: widget.sessionId,
           ),
         ),
@@ -161,23 +194,58 @@ void _showErrorDialog(String message) {
     }
   }
 
-  void _toggleFavorite() {
-    setState(() {
-      _isFavorite = !_isFavorite;
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isFavorite 
-            ? 'Added to favorites' 
-            : 'Removed from favorites'
-        ),
-        backgroundColor: Colors.purple[700],
-        duration: const Duration(seconds: 2),
-      ),
+  Future<void> _toggleFavorite() async {
+  if (_isLoadingFavorite) return;
+
+  setState(() {
+    _isLoadingFavorite = true;
+  });
+
+  try {
+    final success = await widget.favoritesDao.toggleFavorite(
+      sessionId: widget.sessionId,
+      exhibitId: widget.exhibitDetails.exhibit_id,
     );
+
+    if (success && mounted) {
+      setState(() {
+        _isFavorite = !_isFavorite;
+        _isLoadingFavorite = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isFavorite 
+              ? 'Added to favorites' 
+              : 'Removed from favorites'
+          ),
+          backgroundColor: Colors.purple[700],
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else if (mounted) {
+      setState(() {
+        _isLoadingFavorite = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to update favorite'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  } catch (e) {
+    print('Error toggling favorite: $e');
+    if (mounted) {
+      setState(() {
+        _isLoadingFavorite = false;
+      });
+    }
   }
+}
 
   void _showLongDescription() {
     showDialog(
@@ -618,10 +686,19 @@ void _showErrorDialog(String message) {
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(
-              _isFavorite ? Icons.star : Icons.star_border,
-              color: _isFavorite ? Colors.amber : Colors.white,
-            ),
+            icon: _isLoadingFavorite
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(
+                    _isFavorite ? Icons.star : Icons.star_border,
+                    color: _isFavorite ? Colors.amber : Colors.white,
+                  ),
             onPressed: _toggleFavorite,
           ),
         ],
