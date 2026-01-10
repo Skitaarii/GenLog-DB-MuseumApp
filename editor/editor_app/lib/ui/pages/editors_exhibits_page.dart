@@ -871,82 +871,35 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 icon: const Icon(Icons.qr_code_2, color: Colors.green),
                                 tooltip: 'Download QR Code',
                                 onPressed: () async {
-                                  // Find which room(s) this exhibit is in
-                                  final roomsResult = await widget.exhibitDao.connection.query(
-                                    '''
-                                    SELECT r.room_id, r.name
-                                    FROM Room r
-                                    JOIN Room_Exhibit re ON r.room_id = re.room_id
-                                    WHERE re.exhibit_id = @exhibitId
-                                    ''',
-                                    substitutionValues: {'exhibitId': e.exhibit_id},
-                                  );
-
-                                  if (roomsResult.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Exhibit "${e.title}" is not assigned to any room yet'),
-                                        backgroundColor: Colors.orange,
-                                      ),
-                                    );
-                                    return;
-                                  }
-
-                                  // If multiple rooms, let user choose
-                                  int? selectedRoomId;
-                                  if (roomsResult.length == 1) {
-                                    selectedRoomId = roomsResult.first[0] as int;
-                                  } else {
-                                    // Show dialog to select room
-                                    selectedRoomId = await showDialog<int>(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        backgroundColor: Colors.grey[900],
-                                        title: const Text(
-                                          'Select Room',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                        content: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: roomsResult.map((row) {
-                                            final roomId = row[0] as int;
-                                            final roomName = row[1] as String;
-                                            return ListTile(
-                                              title: Text(
-                                                roomName,
-                                                style: const TextStyle(color: Colors.white),
-                                              ),
-                                              subtitle: Text(
-                                                'Room ID: $roomId',
-                                                style: TextStyle(color: Colors.grey[400]),
-                                              ),
-                                              onTap: () => Navigator.pop(context, roomId),
-                                            );
-                                          }).toList(),
-                                        ),
-                                      ),
-                                    );
-                                  }
-
-                                  if (selectedRoomId != null) {
+                                  try {
+                                    // Directly download the QR code for this exhibit
                                     final success = await QRCodeHelper.downloadQRCode(
-                                      exhibitId: e.exhibit_id,
-                                      roomId: selectedRoomId,
+                                      exhibit_id: e.exhibit_id,
+                                    // roomId not needed anymore
                                       exhibitTitle: e.title,
                                     );
 
-                                    if (success && mounted) {
+                                    if (!success) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          content: Text('QR code downloaded for "${e.title}"'),
-                                          backgroundColor: Colors.green,
+                                          content: Text('Failed to save QR code for "${e.title}"'),
+                                          backgroundColor: Colors.red,
                                         ),
                                       );
                                     }
+                                  } catch (err) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error generating QR for "${e.title}": $err'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
                                   }
-                                },
+                                }
+
                               ),
                             ),
+
                             // Edit
                             Container(
                               height: 60,

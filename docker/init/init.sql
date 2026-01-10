@@ -56,6 +56,7 @@ CREATE TABLE Room_Exhibit (
   FOREIGN KEY (room_id) REFERENCES Room(room_id),
   FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id), 
   PRIMARY KEY (id)
+  UNIQUE (exhibit_id);
 );
 
 CREATE TABLE QR_Code (

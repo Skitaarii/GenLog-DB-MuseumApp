@@ -59,12 +59,10 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
       // Parse JSON format: {"exhibit_id": 1, "room_id": 2}
       final data = jsonDecode(qrData);
       final exhibitId = data['exhibit_id'] as int;
-      final roomId = data['room_id'] as int;
       
       // Register the scan
       await widget.visitorDao.recordQRScan(
         sessionId: widget.sessionId,
-        roomId: roomId,
         exhibitId: exhibitId,
       );
 
