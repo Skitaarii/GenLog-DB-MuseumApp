@@ -1,18 +1,23 @@
 // Veuillet Gaëtan
 // 2025
-// Description : QR code scan page, for now it only simulate the page, waiting for REAL usage of camera and qrCode scanning/creation
+// Description: QR code scan page with camera scanning only
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:visitor_app/data/visitor_dao.dart';
+import 'package:visitor_app/data/qr_code_dao.dart';
 import 'package:visitor_app/ui/pages/visitor_exhibit_info_page.dart';
 
 class QRCodeScanPage extends StatefulWidget {
   final VisitorDao visitorDao;
+  final QRCodeDao qrCodeDao;
   final int sessionId;
 
   const QRCodeScanPage({
     super.key,
     required this.visitorDao,
+    required this.qrCodeDao,
     required this.sessionId,
   });
 
@@ -21,56 +26,87 @@ class QRCodeScanPage extends StatefulWidget {
 }
 
 class _QRCodeScanPageState extends State<QRCodeScanPage> {
-  final TextEditingController _exhibitIdController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _isProcessing = false;
+  late MobileScannerController _scannerController;
 
-  Future<void> _navigateToExhibitInfo() async {
-    if (_formKey.currentState!.validate()) {
-      final exhibitId = int.tryParse(_exhibitIdController.text);
+  @override
+  void initState() {
+    super.initState();
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scannerController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _processQRCode(String qrData) async {
+    // Prevent processing multiple QR codes at once
+    if (_isProcessing) return;
+    
+    setState(() {
+      _isProcessing = true;
+      _isLoading = true;
+    });
+
+    try {
+      // Parse JSON format: {"exhibit_id": 1, "room_id": 2}
+      final data = jsonDecode(qrData);
+      final exhibitId = data['exhibit_id'] as int;
+      final roomId = data['room_id'] as int;
       
-      if (exhibitId != null) {
-        setState(() {
-          _isLoading = true;
-        });
+      // Register the scan
+      await widget.visitorDao.recordQRScan(
+        sessionId: widget.sessionId,
+        roomId: roomId,
+        exhibitId: exhibitId,
+      );
 
-        try {
-          //Register the scan
-          await widget.visitorDao.recordQRScan(
-            sessionId: widget.sessionId,
-            roomId: 1, 
-            exhibitId: exhibitId,
-          );
+      // Get exhibit details
+      final exhibitDetails = await widget.visitorDao.getExhibitDetails(exhibitId);
 
-          //Get exhibit details
-          final exhibitDetails = await widget.visitorDao.getExhibitDetails(exhibitId);
+      if (!mounted) return;
 
-          if (!mounted) return;
-          
+      if (exhibitDetails != null) {
+        // Navigate to exhibit info page
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VisitorExhibitInfoPage(
+              exhibitDetails: exhibitDetails,
+              visitorDao: widget.visitorDao,
+              sessionId: widget.sessionId,
+            ),
+          ),
+        );
+        
+        // Reset processing state when returning from exhibit page
+        if (mounted) {
           setState(() {
+            _isProcessing = false;
             _isLoading = false;
           });
-
-          if (exhibitDetails != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => VisitorExhibitInfoPage(
-                  exhibitDetails: exhibitDetails,
-                  visitorDao: widget.visitorDao,
-                  sessionId: widget.sessionId,
-                ),
-              ),
-            );
-          } else {
-            _showErrorDialog('Exhibit not found');
-          }
-        } catch (e) {
-          setState(() {
-            _isLoading = false;
-          });
-          _showErrorDialog('Error: $e');
         }
+      } else {
+        _showErrorDialog('Exhibit not found (ID: $exhibitId)');
+        setState(() {
+          _isProcessing = false;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog('Error: ${e.toString()}');
+        setState(() {
+          _isProcessing = false;
+          _isLoading = false;
+        });
       }
     }
   }
@@ -80,16 +116,46 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.grey[900],
-        title: const Text('Error', style: TextStyle(color: Colors.white)),
-        content: Text(message, style: const TextStyle(color: Colors.white70)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red[400]),
+            const SizedBox(width: 8),
+            const Text('Error', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white70),
+        ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK', style: TextStyle(color: Colors.purpleAccent)),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.purple[700]!, Colors.deepPurple[700]!],
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'OK',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  void _toggleTorch() {
+    _scannerController.toggleTorch();
   }
 
   @override
@@ -98,7 +164,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text(
-          'Museum''s app',
+          'Scan QR Code',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -107,202 +173,307 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
         backgroundColor: Colors.purple[700],
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.flash_off,
+              color: Colors.white,
+            ),
+            onPressed: _toggleTorch,
+            tooltip: 'Toggle flashlight',
+          ),
+        ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
-              ),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(24.0),
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  //QR code icone
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: Colors.purple[300]!, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.purple.withOpacity(0.3),
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.qr_code_scanner,
-                      size: 100,
-                      color: Colors.purple[300],
-                    ),
+                  const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
                   ),
-                  const SizedBox(height: 32),
-                  
-                  //Instruction text
+                  const SizedBox(height: 20),
                   Text(
-                    'Scan the QR code near the exhibit',
+                    'Loading exhibit information...',
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Or enter the exhibit ID manually',
-                    style: TextStyle(
-                      fontSize: 16,
                       color: Colors.grey[400],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-                  
-                  //Formualire
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _exhibitIdController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            labelText: 'Exhibit ID',
-                            labelStyle: TextStyle(color: Colors.grey[400]),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.purple[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.purple[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.purpleAccent),
-                            ),
-                            prefixIcon: Icon(Icons.numbers, color: Colors.purple[300]),
-                            hintText: 'Enter exhibit ID (e.g., 123)',
-                            hintStyle: TextStyle(color: Colors.grey[500]),
-                            filled: true,
-                            fillColor: Colors.grey[900],
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter an exhibit ID';
-                            }
-                            if (int.tryParse(value) == null) {
-                              return 'Please enter a valid number';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                        
-                        //Validation button
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.purple[700]!,
-                                Colors.deepPurple[700]!,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.purple.withOpacity(0.4),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _navigateToExhibitInfo,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 40,
-                                vertical: 16,
-                              ),
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'View Exhibit Details',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      fontSize: 16,
                     ),
                   ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  //Session informations
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.purple[800]!),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.fingerprint,
-                          size: 16,
-                          color: Colors.purple[300],
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Session ID: ${widget.sessionId}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  //DEV BUTTON TO SIMULATE A SCAN -> EXHIBIT ID = 1 
-                  /*
-                  TextButton(
-                    onPressed: () {
-                      _exhibitIdController.text = '1';
-                      _navigateToExhibitInfo();
-                    },
-                    child: const Text(
-                      'Simulate scan (Exhibit #1)',
-                      style: TextStyle(
-                        color: Colors.purpleAccent,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                  */
                 ],
               ),
+            )
+          : Stack(
+              children: [
+                // Camera view
+                MobileScanner(
+                  controller: _scannerController, 
+                  onDetect: (capture) {
+                    if (_isProcessing) return;
+                    
+                    final List<Barcode> barcodes = capture.barcodes;
+                    for (final barcode in barcodes) {
+                      if (barcode.rawValue != null) {
+                        _processQRCode(barcode.rawValue!);
+                        break;
+                      }
+                    }
+                  },
+                ),
+                
+                // Overlay with scanning instructions
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.7),
+                        Colors.transparent,
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                      stops: const [0.0, 0.3, 0.7, 1.0],
+                    ),
+                  ),
+                ),
+                
+                Column(
+                  children: [
+                    const SizedBox(height: 40),
+                    
+                    // Instructions
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.purple[300]!, width: 2),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.qr_code_scanner,
+                            size: 40,
+                            color: Colors.purple[300],
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Point your camera at the QR code',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'The exhibit will load automatically',
+                            style: TextStyle(
+                              color: Colors.grey[300],
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const Spacer(),
+                    
+                    // Scanning frame
+                    Center(
+                      child: Container(
+                        width: 280,
+                        height: 280,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.purple[300]!,
+                            width: 3,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Stack(
+                          children: [
+                            // Animated scanning line
+                            AnimatedScanLine(),
+                            
+                            // Corner decorations
+                            Positioned(
+                              top: -2,
+                              left: -2,
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(color: Colors.purple, width: 6),
+                                    left: BorderSide(color: Colors.purple, width: 6),
+                                  ),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(18),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: -2,
+                              right: -2,
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(color: Colors.purple, width: 6),
+                                    right: BorderSide(color: Colors.purple, width: 6),
+                                  ),
+                                  borderRadius: const BorderRadius.only(
+                                    topRight: Radius.circular(18),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: -2,
+                              left: -2,
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(color: Colors.purple, width: 6),
+                                    left: BorderSide(color: Colors.purple, width: 6),
+                                  ),
+                                  borderRadius: const BorderRadius.only(
+                                    bottomLeft: Radius.circular(18),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: -2,
+                              right: -2,
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(color: Colors.purple, width: 6),
+                                    right: BorderSide(color: Colors.purple, width: 6),
+                                  ),
+                                  borderRadius: const BorderRadius.only(
+                                    bottomRight: Radius.circular(18),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    const Spacer(),
+                    
+                    // Session info at bottom
+                    Container(
+                      margin: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.purple[800]!),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.fingerprint,
+                            size: 18,
+                            color: Colors.purple[300],
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Session ID: ${widget.sessionId}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[300],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ],
             ),
+    );
+  }
+}
+
+// Animated scanning line widget
+class AnimatedScanLine extends StatefulWidget {
+  const AnimatedScanLine({super.key});
+
+  @override
+  State<AnimatedScanLine> createState() => _AnimatedScanLineState();
+}
+
+class _AnimatedScanLineState extends State<AnimatedScanLine>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Positioned(
+          top: _animation.value * 250,
+          left: 20,
+          right: 20,
+          child: Container(
+            height: 2,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  Colors.purple[300]!,
+                  Colors.transparent,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.purple.withOpacity(0.5),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -5,6 +5,8 @@ import 'package:visitor_app/data/exhibit_dao.dart';
 import 'package:visitor_app/data/room_dao.dart';
 import 'package:visitor_app/data/visitor_dao.dart';
 import 'package:visitor_app/ui/pages/qr_code_scan_page.dart';
+import 'package:visitor_app/data/qr_code_dao.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +24,7 @@ Future<void> main() async {
   final exhibitDao = ExhibitDao(connection);
   final roomDao = RoomDao(connection);
   final visitorDao = VisitorDao(connection);
+  final qrCodeDao = QRCodeDao(connection);
 
   //Session for the visitor
   final sessionId = await visitorDao.createNewSession();
@@ -31,6 +34,7 @@ Future<void> main() async {
     exhibitDao: exhibitDao,
     roomDao: roomDao,
     visitorDao: visitorDao,
+    qrCodeDao: qrCodeDao,
     sessionId: sessionId,
   ));
 }
@@ -39,6 +43,7 @@ class MyApp extends StatelessWidget {
   final ExhibitDao exhibitDao;
   final RoomDao roomDao;
   final VisitorDao visitorDao;
+  final QRCodeDao qrCodeDao;
   final int sessionId;
 
   const MyApp({
@@ -46,6 +51,7 @@ class MyApp extends StatelessWidget {
     required this.exhibitDao,
     required this.roomDao,
     required this.visitorDao,
+    required this.qrCodeDao,
     required this.sessionId,
   });
 
@@ -54,6 +60,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       home: QRCodeScanPage(
         visitorDao: visitorDao,
+        qrCodeDao: qrCodeDao,
         sessionId: sessionId,
       ),
       
