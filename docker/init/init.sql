@@ -59,16 +59,6 @@ CREATE TABLE Room_Exhibit (
   UNIQUE (exhibit_id)
 );
 
-CREATE TABLE QR_Code (
-  QR_id SERIAL,
-  exhibit_id INT,
-  room_id INT,
-  QR_img_path  path,
-  PRIMARY KEY (QR_id),
-  FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id),
-  FOREIGN KEY (room_id) REFERENCES Room(room_id)
-);
-
 CREATE TABLE Images (
   image_id SERIAL,
   exhibit_id INT,
