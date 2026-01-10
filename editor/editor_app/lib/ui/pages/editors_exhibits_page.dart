@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:editor_app/data/exhibit_dao.dart';
 import 'package:editor_app/data/exhibit.dart';
 import 'package:intl/intl.dart';
+import 'package:editor_app/utils/qr_code_helper.dart';
+
 
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');
 
@@ -763,9 +765,11 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                       1: FlexColumnWidth(3),
                       2: FixedColumnWidth(80),
                       3: FixedColumnWidth(80),
+                      4: FixedColumnWidth(80),
                     },
                     children: [
                       // Header row
+                      
                       TableRow(
                         decoration: BoxDecoration(
                           color: Colors.purple[900],
@@ -777,32 +781,25 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                         children: const [
                           Padding(
                             padding: EdgeInsets.all(12),
-                            child: Text(
-                              'ID',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: Text('ID', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Text('Title', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           ),
                           Padding(
                             padding: EdgeInsets.all(12),
                             child: Text(
-                              'Title',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              'QR',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                           Padding(
                             padding: EdgeInsets.all(12),
                             child: Text(
                               'Edit',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -810,15 +807,14 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                             padding: EdgeInsets.all(12),
                             child: Text(
                               'Delete',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                               textAlign: TextAlign.center,
                             ),
                           ),
                         ],
                       ),
+
+                      
                       // Data rows
                       ...exhibits.map((e) {
                         return TableRow(
@@ -865,6 +861,90 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                     ),
                                   ],
                                 ],
+                              ),
+                            ),
+                            // QR Code Download
+                            Container(
+                              height: 60,
+                              alignment: Alignment.center,
+                              child: IconButton(
+                                icon: const Icon(Icons.qr_code_2, color: Colors.green),
+                                tooltip: 'Download QR Code',
+                                onPressed: () async {
+                                  // Find which room(s) this exhibit is in
+                                  final roomsResult = await widget.exhibitDao.connection.query(
+                                    '''
+                                    SELECT r.room_id, r.name
+                                    FROM Room r
+                                    JOIN Room_Exhibit re ON r.room_id = re.room_id
+                                    WHERE re.exhibit_id = @exhibitId
+                                    ''',
+                                    substitutionValues: {'exhibitId': e.exhibit_id},
+                                  );
+
+                                  if (roomsResult.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Exhibit "${e.title}" is not assigned to any room yet'),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  // If multiple rooms, let user choose
+                                  int? selectedRoomId;
+                                  if (roomsResult.length == 1) {
+                                    selectedRoomId = roomsResult.first[0] as int;
+                                  } else {
+                                    // Show dialog to select room
+                                    selectedRoomId = await showDialog<int>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        backgroundColor: Colors.grey[900],
+                                        title: const Text(
+                                          'Select Room',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: roomsResult.map((row) {
+                                            final roomId = row[0] as int;
+                                            final roomName = row[1] as String;
+                                            return ListTile(
+                                              title: Text(
+                                                roomName,
+                                                style: const TextStyle(color: Colors.white),
+                                              ),
+                                              subtitle: Text(
+                                                'Room ID: $roomId',
+                                                style: TextStyle(color: Colors.grey[400]),
+                                              ),
+                                              onTap: () => Navigator.pop(context, roomId),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  if (selectedRoomId != null) {
+                                    final success = await QRCodeHelper.downloadQRCode(
+                                      exhibitId: e.exhibit_id,
+                                      roomId: selectedRoomId,
+                                      exhibitTitle: e.title,
+                                    );
+
+                                    if (success && mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('QR code downloaded for "${e.title}"'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
                               ),
                             ),
                             // Edit
