@@ -98,7 +98,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text(
-          'Scan QR Code',
+          'Museum''s app',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -285,6 +285,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                   const SizedBox(height: 20),
                   
                   //DEV BUTTON TO SIMULATE A SCAN -> EXHIBIT ID = 1 
+                  /*
                   TextButton(
                     onPressed: () {
                       _exhibitIdController.text = '1';
@@ -298,6 +299,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                       ),
                     ),
                   ),
+                  */
                 ],
               ),
             ),

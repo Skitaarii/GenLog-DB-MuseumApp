@@ -1,5 +1,5 @@
 --TABLE CREATION QUERY--
---@ VEUILLET GAËTAN
+--@ VEUILLET GAËTAN & WEBER BENNO
 -- 10.12.2025
 -- Description : Create all the table as the scheme (except for type IMG column, it doesn't exist so we use PATH). Made with the docker's container we saw in course + beekeper
 
@@ -166,11 +166,19 @@ CREATE TABLE Itineraries (
 
 CREATE TABLE Itinerary_Exhibit (
   id SERIAL,
+  exhibit_order INT,
   exhibit_id INT,
   itinerary_id INT,
   FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id),
   FOREIGN KEY (itinerary_id) REFERENCES Itineraries(itinerary_id),
   PRIMARY KEY (id)
+);
+
+CREATE TABLE Favorites (
+  session_id INT,
+  exhibit_id INT,
+  FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id),
+  FOREIGN KEY (session_id) REFERENCES Session(session_id)
 )
 
 

@@ -616,6 +616,53 @@ class AdminDao {
         },
       ];
 
+      // 12) Insert itineraries
+      final itineraryIds = <int>[];
+
+      final itineraries = [
+        'Chef-d\'œuvres incontournables',
+        'Voyage dans l\'Antiquité',
+        'Science & Futur',
+      ];
+
+      for (final title in itineraries) {
+        final result = await connection.query(
+          '''
+          INSERT INTO Itineraries (title)
+          VALUES (@title)
+          RETURNING itinerary_id
+          ''',
+          substitutionValues: {'title': title},
+        );
+        itineraryIds.add(result.first[0] as int);
+      }
+
+      // 13) Link exhibits to itineraries
+      final itineraryExhibits = [
+        // Chef-d'œuvres incontournables
+        {'itinerary_id': itineraryIds[0], 'exhibit_id': exhibitIds[0]}, // Mona Lisa
+        {'itinerary_id': itineraryIds[0], 'exhibit_id': exhibitIds[3]}, // Roman Statues
+        {'itinerary_id': itineraryIds[0], 'exhibit_id': exhibitIds[4]}, // Abstract Art
+
+        // Voyage dans l'Antiquité
+        {'itinerary_id': itineraryIds[1], 'exhibit_id': exhibitIds[2]}, // Shipwreck
+        {'itinerary_id': itineraryIds[1], 'exhibit_id': exhibitIds[3]}, // Roman Statues
+
+        // Science & Futur
+        {'itinerary_id': itineraryIds[2], 'exhibit_id': exhibitIds[1]}, // Telescope
+        {'itinerary_id': itineraryIds[2], 'exhibit_id': exhibitIds[5]}, // Robot
+      ];
+
+      for (final ie in itineraryExhibits) {
+        await connection.execute(
+          '''
+          INSERT INTO Itinerary_Exhibit (itinerary_id, exhibit_id)
+          VALUES (@itinerary_id, @exhibit_id)
+          ''',
+          substitutionValues: ie,
+        );
+      }
+
       for (final feedback in feedbacks) {
         await connection.execute(
           '''
