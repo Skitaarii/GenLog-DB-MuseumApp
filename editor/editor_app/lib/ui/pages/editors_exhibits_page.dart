@@ -7,6 +7,9 @@ import 'package:editor_app/data/exhibit_dao.dart';
 import 'package:editor_app/data/exhibit.dart';
 import 'package:intl/intl.dart';
 import 'package:editor_app/utils/qr_code_helper.dart';
+import 'package:image_picker/image_picker.dart';  
+import 'dart:typed_data';                          
+import 'dart:io';      
 
 
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');
@@ -30,6 +33,7 @@ class EditorsExhibitsPage extends StatefulWidget {
 
 class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
   late Future<List<Exhibit>> _exhibitsFuture;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -39,6 +43,23 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
 
   void _loadExhibits() {
     _exhibitsFuture = widget.exhibitDao.getAllExhibits();
+  }
+
+  Future<List<ExhibitImage>> _pickImages() async {
+    final List<XFile> pickedFiles = await _imagePicker.pickMultiImage();
+    
+    List<ExhibitImage> images = [];
+    for (var file in pickedFiles) {
+      final bytes = await file.readAsBytes();
+      final fileName = file.name.split('.').first;
+      
+      images.add(ExhibitImage(
+        imageData: bytes,
+        altText: fileName,
+      ));
+    }
+    
+    return images;
   }
 
   Future<void> _openAddExhibitDialog() async {
@@ -51,6 +72,8 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
 
     final shortDescController = TextEditingController(text: shortDescText);
     final longDescController = TextEditingController(text: longDescText);
+
+    List<ExhibitImage> selectedImages = [];
 
     await showDialog(
       context: context,
@@ -152,6 +175,102 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                       maxLines: 3,
                     ),
                     const SizedBox(height: 20),
+
+                    // Image picker section
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.purple[700]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.image, color: Colors.purple[300]),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Images (${selectedImages.length})',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Spacer(),
+                              ElevatedButton.icon(
+                                onPressed: () async {
+                                  final images = await _pickImages();
+                                  setDialogState(() {
+                                    selectedImages.addAll(images);
+                                  });
+                                },
+                                icon: const Icon(Icons.add_photo_alternate, size: 18),
+                                label: const Text('Add Images'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.purple[700],
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (selectedImages.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 100,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: selectedImages.length,
+                                itemBuilder: (context, index) {
+                                  final img = selectedImages[index];
+                                  return Container(
+                                    margin: const EdgeInsets.only(right: 8),
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.memory(
+                                            img.imageData,
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 4,
+                                          right: 4,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setDialogState(() {
+                                                selectedImages.removeAt(index);
+                                              });
+                                            },
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              padding: const EdgeInsets.all(4),
+                                              child: const Icon(
+                                                Icons.close,
+                                                size: 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),                    
 
                     // Dates
                     Container(
@@ -295,13 +414,21 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                               final short_desc = await widget.exhibitDao.getOrCreateShortDescId(shortDescController.text);
                               final long_desc = await widget.exhibitDao.getOrCreateLongDescId(longDescController.text);
 
-                              await widget.exhibitDao.insertExhibit(
-                                title: titleController.text,
-                                startDate: startDate,
-                                finalDate: finalDate,
-                                shortDescId: short_desc,
-                                longDescId: long_desc,
-                              );
+                              final exhibitId = await widget.exhibitDao.insertExhibit(
+                                  title: titleController.text,
+                                  startDate: startDate,
+                                  finalDate: finalDate,
+                                  shortDescId: short_desc,
+                                  longDescId: long_desc,
+                                );
+
+                                for (var image in selectedImages) {
+                                  await widget.exhibitDao.insertImage(
+                                    exhibitId: exhibitId,
+                                    imageData: image.imageData,
+                                    altText: image.altText,
+                                  );
+                                }
 
                               Navigator.pop(context);
                               setState(() {
@@ -355,6 +482,9 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
 
     final shortDescController = TextEditingController(text: shortDescText);
     final longDescController = TextEditingController(text: longDescText);
+
+    List<ExhibitImage> existingImages = await widget.exhibitDao.getExhibitImages(exhibit.exhibit_id);
+    List<ExhibitImage> newImages = [];
 
     await showDialog(
       context: context,
@@ -457,6 +587,174 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                               fillColor: Colors.grey[800],
                             ),
                             maxLines: 3,
+                          ),
+                          const SizedBox(height: 20),
+                                                    Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[800],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.purple[700]!),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.image, color: Colors.purple[300]),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Images (${existingImages.length + newImages.length})',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    ElevatedButton.icon(
+                                      onPressed: () async {
+                                        final images = await _pickImages();
+                                        setDialogState(() {
+                                          newImages.addAll(images);
+                                        });
+                                      },
+                                      icon: const Icon(Icons.add_photo_alternate, size: 18),
+                                      label: const Text('Add'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.purple[700],
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (existingImages.isNotEmpty || newImages.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    height: 100,
+                                    child: ListView(
+                                      scrollDirection: Axis.horizontal,
+                                      children: [
+                                        // ← EXISTING IMAGES (from database)
+                                        ...existingImages.asMap().entries.map((entry) {
+                                          final index = entry.key;
+                                          final img = entry.value;
+                                          return Container(
+                                            margin: const EdgeInsets.only(right: 8),
+                                            child: Stack(
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  child: Image.memory(
+                                                    img.imageData,
+                                                    width: 100,
+                                                    height: 100,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                                // Delete button for existing images
+                                                Positioned(
+                                                  top: 4,
+                                                  right: 4,
+                                                  child: GestureDetector(
+                                                    onTap: () async {
+                                                      // Delete from database immediately
+                                                      if (img.imageId != null) {
+                                                        await widget.exhibitDao.deleteImage(img.imageId!);
+                                                      }
+                                                      setDialogState(() {
+                                                        existingImages.removeAt(index);
+                                                      });
+                                                    },
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.red,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      padding: const EdgeInsets.all(4),
+                                                      child: const Icon(
+                                                        Icons.close,
+                                                        size: 16,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }),
+                                        // ← NEW IMAGES (not yet saved to database)
+                                        ...newImages.asMap().entries.map((entry) {
+                                          final index = entry.key;
+                                          final img = entry.value;
+                                          return Container(
+                                            margin: const EdgeInsets.only(right: 8),
+                                            child: Stack(
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  child: Image.memory(
+                                                    img.imageData,
+                                                    width: 100,
+                                                    height: 100,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                                // "NEW" badge
+                                                Positioned(
+                                                  top: 4,
+                                                  left: 4,
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.green,
+                                                      borderRadius: BorderRadius.circular(4),
+                                                    ),
+                                                    padding: const EdgeInsets.all(4),
+                                                    child: const Text(
+                                                      'NEW',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 10,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Delete button for new images
+                                                Positioned(
+                                                  top: 4,
+                                                  right: 4,
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      // Just remove from list, not saved yet
+                                                      setDialogState(() {
+                                                        newImages.removeAt(index);
+                                                      });
+                                                    },
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.red,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      padding: const EdgeInsets.all(4),
+                                                      child: const Icon(
+                                                        Icons.close,
+                                                        size: 16,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 20),
 
@@ -595,15 +893,22 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                               await widget.exhibitDao.update(
                                 exhibitId: exhibit.exhibit_id,
                                 title: titleController.text,
-                                startDate: startDate!,
-                                finalDate: finalDate!,
+                                startDate: startDate,
+                                finalDate: finalDate,
                                 shortDesc: shortDescController.text,
                                 longDesc: longDescController.text,
                               );
+                                for (var image in newImages) {
+                                  await widget.exhibitDao.insertImage(
+                                    exhibitId: exhibit.exhibit_id,
+                                    imageData: image.imageData,
+                                    altText: image.altText,
+                                  );
+                                }
 
-                              Navigator.pop(context);
-                              setState(() => _loadExhibits());
-                            },
+                                Navigator.pop(context);
+                                setState(() => _loadExhibits());
+                              },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,

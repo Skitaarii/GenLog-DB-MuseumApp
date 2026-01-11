@@ -63,9 +63,10 @@ CREATE TABLE Images (
   image_id SERIAL,
   exhibit_id INT,
   alt_text VARCHAR(100),
-  img_path path,
+  img_data BYTEA NOT NULL,
+  img_type VARCHAR(50),
   PRIMARY KEY (image_id),
-  FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id)
+  FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id) ON DELETE CASCADE
 );
 
 CREATE TABLE Tags (

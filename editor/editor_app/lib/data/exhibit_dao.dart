@@ -3,25 +3,43 @@
 // Data Access Object for User entity
 // WHAT DA HELL IS GOING ON
 
+import 'package:flutter/material.dart';
 import 'package:postgres/postgres.dart';
 import 'package:editor_app/data/exhibit.dart';
+import 'dart:typed_data';  // ← ADD THIS IMPORT
+import 'dart:convert';
+
+// ← ADD THIS CLASS (same as in the page file)
+class ExhibitImage {
+  final int? imageId;
+  final Uint8List imageData;
+  final String altText;
+
+  ExhibitImage({
+    this.imageId,
+    required this.imageData,
+    required this.altText,
+  });
+}
 
 class ExhibitDao {
   final PostgreSQLConnection connection;
 
   ExhibitDao(this.connection);
 
-  Future<void> insertExhibit({
+  // ← CHANGED: Now returns int (the new exhibit_id)
+  Future<int> insertExhibit({
     required String title,
     DateTime? startDate,
     DateTime? finalDate,
     required int shortDescId,
     required int longDescId,
   }) async {
-    await connection.query(
+    final result = await connection.query(
       '''
       INSERT INTO exhibits(title, short_desc_id, long_desc_id, start_date, final_date)
       VALUES (@title, @short_desc_id, @long_desc_id, @start_date, @final_date)
+      RETURNING exhibit_id
       ''',
       substitutionValues: {
         'title': title,
@@ -31,6 +49,7 @@ class ExhibitDao {
         'final_date': finalDate,
       },
     );
+    return result.first[0] as int;
   }
 
 // Need to be changed for each language, absoluetly no idea for now how to do it AHAHAHAH
@@ -65,8 +84,8 @@ Future<int> getOrCreateLongDescId(String text) async {
   Future<void> update({
     required int exhibitId,
     required String title,
-    required DateTime startDate,
-    required DateTime finalDate,
+    required DateTime? startDate,
+    required DateTime? finalDate,
     required String shortDesc,
     required String longDesc,
   }) async {
@@ -132,5 +151,53 @@ Future<int> getOrCreateLongDescId(String text) async {
       );
     }).toList();
   }
-}
 
+  Future<void> insertImage({
+    required int exhibitId,
+    required Uint8List imageData,
+    required String altText,
+  }) async {
+    final base64Image = base64Encode(imageData);
+    await connection.query(
+      '''
+      INSERT INTO images(exhibit_id, img_data, alt_text)
+      VALUES (@exhibit_id, decode(@img_data, 'base64'), @alt_text)
+      ''',
+      substitutionValues: {
+        'exhibit_id': exhibitId,
+        'img_data': base64Image,
+        'alt_text': altText,
+      },
+    );
+    // Explicitly tell postgres this is binary data
+  }
+
+  Future<List<ExhibitImage>> getExhibitImages(int exhibitId) async {
+    final result = await connection.query(
+      '''
+      SELECT image_id, img_data, alt_text
+      FROM images
+      WHERE exhibit_id = @exhibit_id
+      ORDER BY image_id
+      ''',
+      substitutionValues: {'exhibit_id': exhibitId},
+    );
+
+    return result.map((row) {
+      final data = row[1];
+      
+      return ExhibitImage(
+        imageId: row[0] as int,
+        imageData: row[1] as Uint8List,
+        altText: row[2] as String,
+      );
+    }).toList();
+  }
+
+  Future<void> deleteImage(int imageId) async {
+    await connection.query(
+      'DELETE FROM images WHERE image_id = @id',
+      substitutionValues: {'id': imageId},
+    );
+  }
+}
