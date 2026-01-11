@@ -4,9 +4,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:trying_flutter/data/exhibit_dao.dart';
-import 'package:trying_flutter/data/room_dao.dart';
-import 'package:trying_flutter/ui/pages/editors_home_page.dart';
+import 'package:admin_app/data/exhibit_dao.dart';
+import 'package:admin_app/data/room_dao.dart';
+import 'package:admin_app/ui/pages/editors_home_page.dart';
 //import 'qrcode_page.dart'; // ici QRViewExample est défini
 
 class MyHomePage extends StatefulWidget {

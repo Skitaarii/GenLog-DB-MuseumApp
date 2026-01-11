@@ -5,8 +5,8 @@
 // visitor_exhibit_info_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/data/visitor.dart';
-import 'package:trying_flutter/data/visitor_dao.dart';
+import 'package:admin_app/data/visitor.dart';
+import 'package:admin_app/data/visitor_dao.dart';
 import 'package:intl/intl.dart';
 
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');

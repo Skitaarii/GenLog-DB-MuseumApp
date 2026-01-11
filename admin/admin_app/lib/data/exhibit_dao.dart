@@ -4,7 +4,7 @@
 // WHAT DA HELL IS GOING ON
 
 import 'package:postgres/postgres.dart';
-import 'package:trying_flutter/data/exhibit.dart';
+import 'package:admin_app/data/exhibit.dart';
 
 class ExhibitDao {
   final PostgreSQLConnection connection;

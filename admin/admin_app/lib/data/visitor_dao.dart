@@ -3,7 +3,7 @@
 
 
 import 'package:postgres/postgres.dart';
-import 'package:trying_flutter/data/visitor.dart';
+import 'package:admin_app/data/visitor.dart';
 
 class VisitorDao {
   final PostgreSQLConnection connection;

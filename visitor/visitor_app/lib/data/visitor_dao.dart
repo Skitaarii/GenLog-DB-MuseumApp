@@ -182,10 +182,22 @@ Future<bool> submitFeedback({
   //Qrcode
   Future<bool> recordQRScan({
     required int sessionId,
-    required int roomId,
     required int exhibitId,
   }) async {
     try {
+    //Get the room_id from the DB based on the exhibit_id
+    final result = await connection.query(
+      'SELECT room_id FROM room_exhibit WHERE id = @exhibitId',
+      substitutionValues: {'exhibitId': exhibitId},
+    );
+
+    if (result.isEmpty) {
+      print('Exhibit not found (ID: $exhibitId)');
+      return false;
+    }
+
+  final roomId = result.first.toColumnMap()['room_id'] as int;
+
       await connection.execute('''
         INSERT INTO QR_Scan (
           session_id, 

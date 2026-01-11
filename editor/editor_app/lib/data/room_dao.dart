@@ -40,20 +40,33 @@ Future<void> updateRoom(int roomId, {required String name}) async {
 }
 
 Future<void> updateRoomExhibits(int roomId, List<int> exhibitIds) async {
-  // Supprime les anciennes associations
+  // Remove all exhibits currently in this room
   await connection.execute(
     'DELETE FROM Room_Exhibit WHERE room_id = @roomId',
     substitutionValues: {'roomId': roomId},
   );
-  
-  // Ajoute les nouvelles associations
+
   for (final exhibitId in exhibitIds) {
+    // Ensure exhibit is not linked to any other room
     await connection.execute(
-      'INSERT INTO Room_Exhibit (room_id, exhibit_id) VALUES (@roomId, @exhibitId)',
-      substitutionValues: {'roomId': roomId, 'exhibitId': exhibitId},
+      'DELETE FROM Room_Exhibit WHERE exhibit_id = @exhibitId',
+      substitutionValues: {'exhibitId': exhibitId},
+    );
+
+    // Insert the unique association
+    await connection.execute(
+      '''
+      INSERT INTO Room_Exhibit (room_id, exhibit_id)
+      VALUES (@roomId, @exhibitId)
+      ''',
+      substitutionValues: {
+        'roomId': roomId,
+        'exhibitId': exhibitId,
+      },
     );
   }
 }
+
 
   
 

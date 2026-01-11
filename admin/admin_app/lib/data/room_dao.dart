@@ -3,8 +3,8 @@
 // Data access Object for room
 
 import 'package:postgres/postgres.dart';
-import 'package:trying_flutter/data/room.dart';
-import 'package:trying_flutter/data/exhibit.dart';
+import 'package:admin_app/data/room.dart';
+import 'package:admin_app/data/exhibit.dart';
 
 
 

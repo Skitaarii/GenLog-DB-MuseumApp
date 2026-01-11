@@ -3,8 +3,8 @@
 // Description : QR code scan page, for now it only simulate the page, waiting for REAL usage of camera and qrCode scanning/creation
 
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/data/visitor_dao.dart';
-import 'package:trying_flutter/ui/pages/visitor_exhibit_info_page.dart';
+import 'package:admin_app/data/visitor_dao.dart';
+import 'package:admin_app/ui/pages/visitor_exhibit_info_page.dart';
 
 class QRCodeScanPage extends StatefulWidget {
   final VisitorDao visitorDao;

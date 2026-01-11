@@ -6,12 +6,12 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/data/admin_dao.dart';
-import 'package:trying_flutter/data/exhibit_dao.dart';
-import 'package:trying_flutter/data/room_dao.dart';
-import 'package:trying_flutter/data/visitor_dao.dart';
-import 'package:trying_flutter/ui/pages/editors_home_page.dart';
-import 'package:trying_flutter/ui/pages/qr_code_scan_page.dart';
+import 'package:admin_app/data/admin_dao.dart';
+import 'package:admin_app/data/exhibit_dao.dart';
+import 'package:admin_app/data/room_dao.dart';
+import 'package:admin_app/data/visitor_dao.dart';
+import 'package:admin_app/ui/pages/editors_home_page.dart';
+import 'package:admin_app/ui/pages/qr_code_scan_page.dart';
 
 class AdminPage extends StatefulWidget {
   final AdminDao adminDao;
@@ -142,7 +142,7 @@ class _AdminPageState extends State<AdminPage> {
     });
 
     try {
-      final success = await widget.adminDao.populateWithSampleData();
+      final success = await widget.adminDao.populateWithSampleData(reset:true);
       
       if (success) {
         setState(() {

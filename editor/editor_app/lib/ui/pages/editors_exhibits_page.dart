@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:editor_app/data/exhibit_dao.dart';
 import 'package:editor_app/data/exhibit.dart';
 import 'package:intl/intl.dart';
+import 'package:editor_app/utils/qr_code_helper.dart';
+
 
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');
 
@@ -763,9 +765,11 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                       1: FlexColumnWidth(3),
                       2: FixedColumnWidth(80),
                       3: FixedColumnWidth(80),
+                      4: FixedColumnWidth(80),
                     },
                     children: [
                       // Header row
+                      
                       TableRow(
                         decoration: BoxDecoration(
                           color: Colors.purple[900],
@@ -777,32 +781,25 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                         children: const [
                           Padding(
                             padding: EdgeInsets.all(12),
-                            child: Text(
-                              'ID',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: Text('ID', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Text('Title', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           ),
                           Padding(
                             padding: EdgeInsets.all(12),
                             child: Text(
-                              'Title',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              'QR',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                           Padding(
                             padding: EdgeInsets.all(12),
                             child: Text(
                               'Edit',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -810,15 +807,14 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                             padding: EdgeInsets.all(12),
                             child: Text(
                               'Delete',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                               textAlign: TextAlign.center,
                             ),
                           ),
                         ],
                       ),
+
+                      
                       // Data rows
                       ...exhibits.map((e) {
                         return TableRow(
@@ -867,6 +863,43 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 ],
                               ),
                             ),
+                            // QR Code Download
+                            Container(
+                              height: 60,
+                              alignment: Alignment.center,
+                              child: IconButton(
+                                icon: const Icon(Icons.qr_code_2, color: Colors.green),
+                                tooltip: 'Download QR Code',
+                                onPressed: () async {
+                                  try {
+                                    // Directly download the QR code for this exhibit
+                                    final success = await QRCodeHelper.downloadQRCode(
+                                      exhibit_id: e.exhibit_id,
+                                    // roomId not needed anymore
+                                      exhibitTitle: e.title,
+                                    );
+
+                                    if (!success) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Failed to save QR code for "${e.title}"'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  } catch (err) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error generating QR for "${e.title}": $err'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+
+                              ),
+                            ),
+
                             // Edit
                             Container(
                               height: 60,

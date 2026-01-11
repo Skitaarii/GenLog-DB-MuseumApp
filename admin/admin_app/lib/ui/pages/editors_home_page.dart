@@ -3,11 +3,11 @@
 // Description : Editors home page to have access to editing Exhbits/Rooms/Itineraries
 
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/ui/pages/editors_rooms_page.dart';
-import 'package:trying_flutter/widgets/editors.dart';
-import 'package:trying_flutter/ui/pages/editors_exhibits_page.dart';
-import 'package:trying_flutter/data/exhibit_dao.dart';
-import 'package:trying_flutter/data/room_dao.dart';
+import 'package:admin_app/ui/pages/editors_rooms_page.dart';
+import 'package:admin_app/widgets/editors.dart';
+import 'package:admin_app/ui/pages/editors_exhibits_page.dart';
+import 'package:admin_app/data/exhibit_dao.dart';
+import 'package:admin_app/data/room_dao.dart';
 
 class EditorsHomePage extends StatelessWidget {
   final ExhibitDao exhibitDao;

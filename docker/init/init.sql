@@ -55,7 +55,8 @@ CREATE TABLE Room_Exhibit (
   exhibit_id INT,
   FOREIGN KEY (room_id) REFERENCES Room(room_id),
   FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id), 
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE (exhibit_id)
 );
 
 CREATE TABLE QR_Code (
@@ -177,8 +178,10 @@ CREATE TABLE Itinerary_Exhibit (
 CREATE TABLE Favorites (
   session_id INT,
   exhibit_id INT,
+  added_at TIMESTAMP,
   FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id),
-  FOREIGN KEY (session_id) REFERENCES Session(session_id)
+  FOREIGN KEY (session_id) REFERENCES Session(session_id),
+  PRIMARY KEY (session_id, exhibit_id)
 )
 
 

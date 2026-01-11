@@ -1,4 +1,4 @@
-import 'package:trying_flutter/data/exhibit.dart';
+import 'package:admin_app/data/exhibit.dart';
 
 
 class Room {

@@ -15,7 +15,7 @@ class ItineraryDao {
   Future<List<Itinerary>> getAllItineraries() async {
     try {
       final result = await connection.query(
-        'SELECT itinerary_id, title FROM Itineraries ORDER BY itinerary_id',
+        'SELECT itinerary_id, title FROM itineraries ORDER BY itinerary_id',
       );
 
       return result.map((row) {
@@ -35,9 +35,9 @@ class ItineraryDao {
     try {
       final result = await connection.query('''
         SELECT i.itinerary_id, i.title, e.exhibit_id, e.title
-        FROM Itineraries i
-        LEFT JOIN Itinerary_Exhibit ie ON ie.itinerary_id = i.itinerary_id
-        LEFT JOIN Exhibits e ON e.exhibit_id = ie.exhibit_id
+        FROM itineraries i
+        LEFT JOIN itinerary_exhibit ie ON ie.itinerary_id = i.itinerary_id
+        LEFT JOIN exhibits e ON e.exhibit_id = ie.exhibit_id
         ORDER BY i.itinerary_id, ie.exhibit_order
       ''');
 
@@ -78,9 +78,9 @@ class ItineraryDao {
     try {
       final result = await connection.query('''
         SELECT i.itinerary_id, i.title, e.exhibit_id, e.title
-        FROM Itineraries i
-        LEFT JOIN Itinerary_Exhibit ie ON ie.itinerary_id = i.itinerary_id
-        LEFT JOIN Exhibits e ON e.exhibit_id = ie.exhibit_id
+        FROM itineraries i
+        LEFT JOIN itinerary_exhibit ie ON ie.itinerary_id = i.itinerary_id
+        LEFT JOIN exhibits e ON e.exhibit_id = ie.exhibit_id
         WHERE i.itinerary_id = @itineraryId
         ORDER BY ie.exhibit_order
       ''', substitutionValues: {'itineraryId': itineraryId});
@@ -117,7 +117,7 @@ class ItineraryDao {
     try {
       final result = await connection.query('''
         SELECT COUNT(*) as count
-        FROM Itinerary_Exhibit
+        FROM itinerary_exhibit
         WHERE itinerary_id = @itineraryId
       ''', substitutionValues: {'itineraryId': itineraryId});
 

@@ -17,13 +17,12 @@ class FavoritesDao {
   }) async {
     try {
       await connection.execute('''
-        INSERT INTO Favorites (session_id, exhibit_id, added_at)
-        VALUES (@sessionId, @exhibitId, @addedAt)
+        INSERT INTO Favorites (session_id, exhibit_id)
+        VALUES (@sessionId, @exhibitId)
         ON CONFLICT (session_id, exhibit_id) DO NOTHING
       ''', substitutionValues: {
         'sessionId': sessionId,
         'exhibitId': exhibitId,
-        'addedAt': DateTime.now(),
       });
       
       print('Favorite added: exhibit $exhibitId for session $sessionId');

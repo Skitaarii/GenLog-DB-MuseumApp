@@ -3,8 +3,8 @@
 // Description : Exhibit page adding/modifying/deleting for admin
 
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/data/exhibit_dao.dart';
-import 'package:trying_flutter/data/exhibit.dart';
+import 'package:admin_app/data/exhibit_dao.dart';
+import 'package:admin_app/data/exhibit.dart';
 import 'package:intl/intl.dart';
 
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');

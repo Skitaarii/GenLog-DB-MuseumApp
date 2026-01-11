@@ -3,8 +3,8 @@
 // Description : Room page adding/modifying/deleting for editor
 
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/data/room_dao.dart';
-import 'package:trying_flutter/data/room.dart';
+import 'package:admin_app/data/room_dao.dart';
+import 'package:admin_app/data/room.dart';
 import 'package:intl/intl.dart';
 
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');
