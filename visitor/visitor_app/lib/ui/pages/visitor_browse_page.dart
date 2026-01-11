@@ -10,6 +10,8 @@ import 'package:visitor_app/data/itinerary.dart';
 import 'package:visitor_app/data/exhibit.dart';
 import 'package:visitor_app/ui/pages/visitor_itinerary_detail_page.dart';
 import 'package:visitor_app/ui/pages/visitor_exhibit_info_page.dart';
+import 'package:visitor_app/utils/language_manager.dart';
+
 
 class VisitorBrowsePage extends StatefulWidget {
   final ItineraryDao itineraryDao;
@@ -93,8 +95,8 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Exhibit not found'),
+          SnackBar(
+            content: Text('exhibit_notfound'.tr),
             backgroundColor: Colors.red,
           ),
         );
@@ -107,8 +109,8 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          'Browse Museum',
+        title: Text(
+          'browse_museum'.tr,
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -127,14 +129,14 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
-          tabs: const [
+          tabs: [
             Tab(
               icon: Icon(Icons.map),
-              text: 'Itineraries',
+              text: 'itineraries'.tr,
             ),
             Tab(
               icon: Icon(Icons.favorite),
-              text: 'Favorites',
+              text: 'favorites'.tr,
             ),
           ],
         ),
@@ -171,7 +173,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                 Icon(Icons.error_outline, size: 60, color: Colors.red[300]),
                 const SizedBox(height: 16),
                 Text(
-                  'Error loading itineraries',
+                  'err_load_iti'.tr,
                   style: TextStyle(color: Colors.grey[400], fontSize: 16),
                 ),
               ],
@@ -189,7 +191,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                 Icon(Icons.map_outlined, size: 80, color: Colors.grey[600]),
                 const SizedBox(height: 16),
                 Text(
-                  'No itineraries available',
+                  'no_iti'.tr,
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 18,
@@ -198,7 +200,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Check back later for guided tours',
+                  'check_later'.tr,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 14,
@@ -310,7 +312,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Includes:',
+                          'include'.tr,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[400],
@@ -348,7 +350,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              '+ ${itinerary.exhibits.length - 3} more',
+                              '+ ${itinerary.exhibits.length - 3} ${'more'.tr}',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.purple[300],
@@ -388,7 +390,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                 Icon(Icons.error_outline, size: 60, color: Colors.red[300]),
                 const SizedBox(height: 16),
                 Text(
-                  'Error loading favorites',
+                  'err_load_fav'.tr,
                   style: TextStyle(color: Colors.grey[400], fontSize: 16),
                 ),
               ],
@@ -406,7 +408,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                 Icon(Icons.favorite_border, size: 80, color: Colors.grey[600]),
                 const SizedBox(height: 16),
                 Text(
-                  'No favorites yet',
+                  'no_fav'.tr,
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 18,
@@ -415,7 +417,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Tap the ⭐ on exhibits to add them here',
+                  'tap_star'.tr,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 14,
@@ -483,7 +485,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Exhibit #${exhibit.exhibit_id}',
+                        '${'exhibit'.tr} #${exhibit.exhibit_id}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[500],

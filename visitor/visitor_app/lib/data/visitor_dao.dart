@@ -1,9 +1,10 @@
-// Gaëtan Veuillet
+// GaÃ«tan Veuillet
 // 2025
 
 
 import 'package:postgres/postgres.dart';
 import 'package:visitor_app/data/visitor.dart';
+import 'package:visitor_app/utils/language_manager.dart';
 
 class VisitorDao {
   final PostgreSQLConnection connection;
@@ -13,12 +14,15 @@ class VisitorDao {
   //Get exhibit detail by its id
   Future<ExhibitDetails?> getExhibitDetails(int exhibitId) async {
     try {
+      // Get current language column (FR, EN, IT, DE)
+      final lang = LanguageManager().dbColumnName;
+      
       final exhibitResult = await connection.query('''
         SELECT 
           e.exhibit_id, 
           e.title, 
-          sd.en as short_desc, 
-          ld.en as long_desc,
+          sd.$lang as short_desc, 
+          ld.$lang as long_desc,
           e.start_date, 
           e.final_date,
           i.img_path
@@ -39,7 +43,7 @@ class VisitorDao {
       //Get the era
       String? eraName;
       final eraResult = await connection.query('''
-        SELECT era.era_name_EN
+        SELECT era.era_name_$lang
         FROM Tags t
         JOIN TagEra te ON t.tag_id = te.tag_id
         JOIN Eras era ON te.era_id = era.era_id
@@ -53,7 +57,7 @@ class VisitorDao {
 
       //Get the themes
       final themesResult = await connection.query('''
-        SELECT thm.thm_name_EN
+        SELECT thm.thm_name_$lang
         FROM Tags t
         JOIN TagTheme tt ON t.tag_id = tt.tag_id
         JOIN Themes thm ON tt.theme_id = thm.theme_id
@@ -71,7 +75,7 @@ class VisitorDao {
         FROM Exhibits e2
         WHERE e2.exhibit_id != @exhibitId
         AND (
-          -- Mêmes thèmes
+          -- MÃªmes thÃ¨mes
           EXISTS (
             SELECT 1 FROM Tags t2
             JOIN TagTheme tt2 ON t2.tag_id = tt2.tag_id
@@ -84,7 +88,7 @@ class VisitorDao {
             )
           )
           OR
-          -- Même ère
+          -- MÃªme Ã¨re
           EXISTS (
             SELECT 1 FROM Tags t2
             JOIN TagEra te2 ON t2.tag_id = te2.tag_id

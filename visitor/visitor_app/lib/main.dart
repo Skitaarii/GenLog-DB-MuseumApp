@@ -6,6 +6,7 @@ import 'package:visitor_app/data/visitor_dao.dart';
 import 'package:visitor_app/data/itinerary_dao.dart'; 
 import 'package:visitor_app/data/favorites_dao.dart';
 import 'package:visitor_app/ui/pages/qr_code_scan_page.dart';
+import 'package:visitor_app/utils/language_manager.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,14 +31,15 @@ Future<void> main() async {
   final sessionId = await visitorDao.createNewSession();
   print('New session created: $sessionId');
 
-  runApp(MyApp(
+  runApp(ListenableBuilder(listenable:LanguageManager(), builder: (context, child) => 
+    MyApp(
     exhibitDao: exhibitDao,
     roomDao: roomDao,
     visitorDao: visitorDao,
     itineraryDao: itineraryDao,
     favoritesDao: favoritesDao, 
     sessionId: sessionId,
-  ));
+  )));
 }
 
 class MyApp extends StatelessWidget {

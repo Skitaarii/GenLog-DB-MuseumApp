@@ -9,6 +9,7 @@ import 'package:visitor_app/data/itinerary_dao.dart';
 import 'package:visitor_app/data/favorites_dao.dart';
 import 'package:visitor_app/ui/pages/visitor_exhibit_info_page.dart';
 import 'package:visitor_app/ui/pages/visitor_browse_page.dart';
+import 'package:visitor_app/utils/language_manager.dart';
 import 'dart:convert';
 
 class QRCodeScanPage extends StatefulWidget {
@@ -49,6 +50,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     _scannerController.dispose();
     super.dispose();
   }
+  
 
   Future<void> _processQRCode(String qrData) async {
     // Prevent processing multiple QR codes at once
@@ -99,7 +101,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
           });
         }
       } else {
-        _showErrorDialog('Exhibit not found (ID: $exhibitId)');
+        _showErrorDialog('${'exhibit_notfound'.tr} (ID: $exhibitId)'.tr);
         setState(() {
           _isProcessing = false;
           _isLoading = false;
@@ -107,7 +109,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorDialog('Invalid QR code format: ${e.toString()}');
+        _showErrorDialog('${'qrcode_invalid'.tr }: ${e.toString()}');
         setState(() {
           _isProcessing = false;
           _isLoading = false;
@@ -162,8 +164,8 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            'Enter Exhibit ID',
+          title: Text(
+            'enter_exhibit'.tr,
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           content: Column(
@@ -174,9 +176,9 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Exhibit ID',
+                  labelText: 'exhibit_id'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
-                  hintText: 'e.g., 1',
+                  hintText: 'exemple'.tr,
                   hintStyle: TextStyle(color: Colors.grey[600]),
                   prefixIcon: Icon(Icons.numbers, color: Colors.purple[300]),
                   border: OutlineInputBorder(
@@ -202,7 +204,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Cancel',
+                'cancel'.tr,
                 style: TextStyle(color: Colors.grey[400]),
               ),
             ),
@@ -216,8 +218,8 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                   _processQRCode(qrData);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a valid number'),
+                    SnackBar(
+                      content: Text('enter_validNbr'.tr),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -229,8 +231,8 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Go',
+              child: Text(
+                'Go'.tr,
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
@@ -245,8 +247,8 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          'Scan QR Code',
+        title: Text(
+          'scan_qr'.tr,
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -262,11 +264,11 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
               color: Colors.white,
             ),
             onPressed: _toggleTorch,
-            tooltip: 'Toggle flashlight',
+            tooltip: 'toggle_flash'.tr,
           ),
+          const LanguageSelector(), // Language selector added here
         ],
       ),
-      // ⬅️ BOUTON HAMBURGER AJOUTÉ ICI
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToBrowsePage,
         backgroundColor: Colors.purple[700],
@@ -277,7 +279,9 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: _isLoading
+      body: ListenableBuilder(
+          listenable: LanguageManager(), 
+          builder: (context, builder) => _isLoading
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -287,7 +291,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Loading exhibit information...',
+                    'loading'.tr,
                     style: TextStyle(
                       color: Colors.grey[400],
                       fontSize: 16,
@@ -352,8 +356,8 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                             color: Colors.purple[300],
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Point your camera at the QR code',
+                          Text(
+                            "camera_qr".tr,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -363,7 +367,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'The exhibit will load automatically',
+                            'exhibit_load'.tr,
                             style: TextStyle(
                               color: Colors.grey[300],
                               fontSize: 14,
@@ -476,7 +480,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                         onPressed: _showManualInputDialog,
                         icon: Icon(Icons.keyboard, color: Colors.purple[300], size: 20),
                         label: Text(
-                          'Enter ID manually',
+                          'manual_id'.tr,
                           style: TextStyle(
                             color: Colors.purple[300],
                             fontSize: 14,
@@ -519,11 +523,11 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20), // Espace pour le FAB
+                    const SizedBox(height: 20),
                   ],
                 ),
               ],
-            ),
+          )    ),
     );
   }
 }

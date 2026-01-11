@@ -7,6 +7,8 @@ import 'package:visitor_app/data/itinerary.dart';
 import 'package:visitor_app/data/visitor_dao.dart';
 import 'package:visitor_app/data/favorites_dao.dart';
 import 'package:visitor_app/ui/pages/visitor_exhibit_info_page.dart';
+import 'package:visitor_app/utils/language_manager.dart';
+
 
 class VisitorItineraryDetailPage extends StatefulWidget {
   final ItineraryWithExhibits itinerary;
@@ -73,8 +75,8 @@ class _VisitorItineraryDetailPageState
         SnackBar(
           content: Text(
             _favoriteStatus[exhibitId] == true
-                ? 'Added to favorites'
-                : 'Removed from favorites',
+                ? 'add_fav'.tr
+                : 'rem_fav'.tr,
           ),
           backgroundColor: Colors.purple[700],
           duration: const Duration(seconds: 1),
@@ -103,8 +105,8 @@ class _VisitorItineraryDetailPageState
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Exhibit not found'),
+          SnackBar(
+            content: Text('exhibit_notfound'.tr),
             backgroundColor: Colors.red,
           ),
         );
@@ -188,7 +190,7 @@ class _VisitorItineraryDetailPageState
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${widget.itinerary.exhibits.length} Exhibit${widget.itinerary.exhibits.length != 1 ? 's' : ''}',
+                        '${widget.itinerary.exhibits.length} ${'exhibit'.tr}${widget.itinerary.exhibits.length != 1 ? 's' : ''}',
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white,
@@ -216,7 +218,7 @@ class _VisitorItineraryDetailPageState
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No exhibits in this itinerary',
+                          'no_exhibit_iti'.tr,
                           style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 16,
@@ -296,7 +298,7 @@ class _VisitorItineraryDetailPageState
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Exhibit #${exhibit.exhibit_id}',
+                                          '${'exhibit'.tr} #${exhibit.exhibit_id}',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.grey[500],
