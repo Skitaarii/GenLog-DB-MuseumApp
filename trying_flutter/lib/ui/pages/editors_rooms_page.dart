@@ -764,7 +764,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                             ),
                           ],
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),
