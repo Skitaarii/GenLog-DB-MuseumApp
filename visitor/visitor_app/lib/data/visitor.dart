@@ -1,3 +1,17 @@
+import 'dart:typed_data'; 
+
+class ExhibitImage {
+  final int? imageId;
+  final Uint8List imageData;
+  final String altText;
+
+  ExhibitImage({
+    this.imageId,
+    required this.imageData,
+    required this.altText,
+  });
+}
+
 class ExhibitDetails {
   final int exhibit_id;
   final String title;
@@ -5,10 +19,11 @@ class ExhibitDetails {
   final String longDesc;
   final DateTime? startDate;
   final DateTime? finalDate;
+  final String? imagePath;
+  final List<ExhibitImage> images;
   final String? eraName;
   final List<String> themes;
   final List<RelatedExhibit> relatedExhibits;
-  final String? imagePath;
 
   ExhibitDetails({
     required this.exhibit_id,
@@ -17,10 +32,11 @@ class ExhibitDetails {
     required this.longDesc,
     this.startDate,
     this.finalDate,
+    this.imagePath,
+    this.images = const [], // *** ADD THIS ***
     this.eraName,
     required this.themes,
     required this.relatedExhibits,
-    this.imagePath,
   });
 }
 

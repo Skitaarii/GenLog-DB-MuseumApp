@@ -847,7 +847,115 @@ void _showErrorDialog(String message) {
                 ),
                 const SizedBox(height: 20),
 
-                // IMAGE (si disponible)
+                // IMAGE GALLERY (replace the existing Container with height: 200)
+              widget.exhibitDetails.images.isNotEmpty
+                ? Container(
+                    height: 300,
+                    child: PageView.builder(
+                      itemCount: widget.exhibitDetails.images.length,
+                      itemBuilder: (context, index) {
+                        final image = widget.exhibitDetails.images[index];
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.purple[800]!),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.memory(
+                                  image.imageData,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[900],
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.broken_image, 
+                                            size: 60, 
+                                            color: Colors.grey),
+                                          SizedBox(height: 8),
+                                          Text(
+                                            'error_loading'.tr,
+                                            style: TextStyle(color: Colors.grey),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                                // Image counter overlay
+                                if (widget.exhibitDetails.images.length > 1)
+                                  Positioned(
+                                    bottom: 12,
+                                    right: 12,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.6),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.purple[700]!,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '${index + 1}/${widget.exhibitDetails.images.length}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                // Alt text overlay (optional, shows on tap)
+                                if (image.altText.isNotEmpty)
+                                  Positioned(
+                                    top: 12,
+                                    left: 12,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.6),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.info_outline,
+                                            size: 14,
+                                            color: Colors.purple[300],
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            image.altText,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                : // No images -  placeholder
                 Container(
                   height: 200,
                   width: double.infinity,

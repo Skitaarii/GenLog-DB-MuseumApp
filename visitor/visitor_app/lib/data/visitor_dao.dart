@@ -5,6 +5,8 @@
 import 'package:postgres/postgres.dart';
 import 'package:visitor_app/data/visitor.dart';
 import 'package:visitor_app/utils/language_manager.dart';
+import 'dart:typed_data'; 
+
 
 class VisitorDao {
   final PostgreSQLConnection connection;
@@ -13,121 +15,120 @@ class VisitorDao {
 
   //Get exhibit detail by its id
   Future<ExhibitDetails?> getExhibitDetails(int exhibitId) async {
-    try {
-      // Get current language column (FR, EN, IT, DE)
-      final lang = LanguageManager().dbColumnName;
-      
-      final exhibitResult = await connection.query('''
-        SELECT 
-          e.exhibit_id, 
-          e.title, 
-          sd.$lang as short_desc, 
-          ld.$lang as long_desc,
-          e.start_date, 
-          e.final_date,
-          i.img_path
-        FROM Exhibits e
-        LEFT JOIN Short_Desc sd ON e.short_desc_id = sd.id
-        LEFT JOIN Long_Desc ld ON e.long_desc_id = ld.id
-        LEFT JOIN Images i ON e.exhibit_id = i.exhibit_id AND i.img_path IS NOT NULL
-        WHERE e.exhibit_id = @exhibitId
-        LIMIT 1
-      ''', substitutionValues: {'exhibitId': exhibitId});
+  try {
+    // Get current language column (FR, EN, IT, DE)
+    final lang = LanguageManager().dbColumnName;
+    
+    final exhibitResult = await connection.query('''
+      SELECT 
+        e.exhibit_id, 
+        e.title, 
+        sd.$lang as short_desc, 
+        ld.$lang as long_desc,
+        e.start_date, 
+        e.final_date
+      FROM Exhibits e
+      LEFT JOIN Short_Desc sd ON e.short_desc_id = sd.id
+      LEFT JOIN Long_Desc ld ON e.long_desc_id = ld.id
+      LEFT JOIN Images i ON e.exhibit_id = i.exhibit_id
+      WHERE e.exhibit_id = @exhibitId
+      LIMIT 1
+    ''', substitutionValues: {'exhibitId': exhibitId});
 
-      if (exhibitResult.isEmpty) {
-        return null;
-      }
-
-      final row = exhibitResult.first;
-
-      //Get the era
-      String? eraName;
-      final eraResult = await connection.query('''
-        SELECT era.era_name_$lang
-        FROM Tags t
-        JOIN TagEra te ON t.tag_id = te.tag_id
-        JOIN Eras era ON te.era_id = era.era_id
-        WHERE t.exhibit_id = @exhibitId
-        LIMIT 1
-      ''', substitutionValues: {'exhibitId': exhibitId});
-
-      if (eraResult.isNotEmpty) {
-        eraName = eraResult.first[0] as String;
-      }
-
-      //Get the themes
-      final themesResult = await connection.query('''
-        SELECT thm.thm_name_$lang
-        FROM Tags t
-        JOIN TagTheme tt ON t.tag_id = tt.tag_id
-        JOIN Themes thm ON tt.theme_id = thm.theme_id
-        WHERE t.exhibit_id = @exhibitId
-      ''', substitutionValues: {'exhibitId': exhibitId});
-
-      final themes = themesResult
-          .map((row) => row[0] as String)
-          .toList();
-
-      //Get linked exhibits 
-      //TODO : MADE IT FORM SIMILAR ERA AND THEME, WE NEED TO SEE WHAT ELSE COULD BE USE
-      final relatedResult = await connection.query('''
-        SELECT DISTINCT e2.exhibit_id, e2.title
-        FROM Exhibits e2
-        WHERE e2.exhibit_id != @exhibitId
-        AND (
-          -- MÃªmes thÃ¨mes
-          EXISTS (
-            SELECT 1 FROM Tags t2
-            JOIN TagTheme tt2 ON t2.tag_id = tt2.tag_id
-            WHERE t2.exhibit_id = e2.exhibit_id
-            AND tt2.theme_id IN (
-              SELECT tt.theme_id
-              FROM Tags t
-              JOIN TagTheme tt ON t.tag_id = tt.tag_id
-              WHERE t.exhibit_id = @exhibitId
-            )
-          )
-          OR
-          -- MÃªme Ã¨re
-          EXISTS (
-            SELECT 1 FROM Tags t2
-            JOIN TagEra te2 ON t2.tag_id = te2.tag_id
-            WHERE t2.exhibit_id = e2.exhibit_id
-            AND te2.era_id IN (
-              SELECT te.era_id
-              FROM Tags t
-              JOIN TagEra te ON t.tag_id = te.tag_id
-              WHERE t.exhibit_id = @exhibitId
-            )
-          )
-        )
-        LIMIT 5
-      ''', substitutionValues: {'exhibitId': exhibitId});
-
-      final relatedExhibits = relatedResult
-          .map((row) => RelatedExhibit(
-                exhibit_id: row[0] as int,
-                title: row[1] as String,
-              ))
-          .toList();
-
-      return ExhibitDetails(
-        exhibit_id: row.toColumnMap()['exhibit_id'] as int,
-        title: row.toColumnMap()['title'] as String,
-        shortDesc: row.toColumnMap()['short_desc'] as String? ?? 'No description available',
-        longDesc: row.toColumnMap()['long_desc'] as String? ?? 'No detailed description available',
-        startDate: row.toColumnMap()['start_date'] as DateTime?,
-        finalDate: row.toColumnMap()['final_date'] as DateTime?,
-        eraName: eraName,
-        themes: themes,
-        relatedExhibits: relatedExhibits,
-        imagePath: row.toColumnMap()['img_path'] as String?,
-      );
-    } catch (e) {
-      print('Error fetching exhibit details: $e');
+    if (exhibitResult.isEmpty) {
       return null;
     }
+
+    final row = exhibitResult.first;
+
+    // Get the era
+    String? eraName;
+    final eraResult = await connection.query('''
+      SELECT era.era_name_$lang
+      FROM Tags t
+      JOIN TagEra te ON t.tag_id = te.tag_id
+      JOIN Eras era ON te.era_id = era.era_id
+      WHERE t.exhibit_id = @exhibitId
+      LIMIT 1
+    ''', substitutionValues: {'exhibitId': exhibitId});
+
+    if (eraResult.isNotEmpty) {
+      eraName = eraResult.first[0] as String;
+    }
+
+    // Get the themes
+    final themesResult = await connection.query('''
+      SELECT thm.thm_name_$lang
+      FROM Tags t
+      JOIN TagTheme tt ON t.tag_id = tt.tag_id
+      JOIN Themes thm ON tt.theme_id = thm.theme_id
+      WHERE t.exhibit_id = @exhibitId
+    ''', substitutionValues: {'exhibitId': exhibitId});
+
+    final themes = themesResult
+        .map((row) => row[0] as String)
+        .toList();
+
+    // Get linked exhibits
+    final relatedResult = await connection.query('''
+      SELECT DISTINCT e2.exhibit_id, e2.title
+      FROM Exhibits e2
+      WHERE e2.exhibit_id != @exhibitId
+      AND (
+        EXISTS (
+          SELECT 1 FROM Tags t2
+          JOIN TagTheme tt2 ON t2.tag_id = tt2.tag_id
+          WHERE t2.exhibit_id = e2.exhibit_id
+          AND tt2.theme_id IN (
+            SELECT tt.theme_id
+            FROM Tags t
+            JOIN TagTheme tt ON t.tag_id = tt.tag_id
+            WHERE t.exhibit_id = @exhibitId
+          )
+        )
+        OR
+        EXISTS (
+          SELECT 1 FROM Tags t2
+          JOIN TagEra te2 ON t2.tag_id = te2.tag_id
+          WHERE t2.exhibit_id = e2.exhibit_id
+          AND te2.era_id IN (
+            SELECT te.era_id
+            FROM Tags t
+            JOIN TagEra te ON t.tag_id = te.tag_id
+            WHERE t.exhibit_id = @exhibitId
+          )
+        )
+      )
+      LIMIT 5
+    ''', substitutionValues: {'exhibitId': exhibitId});
+
+    final relatedExhibits = relatedResult
+        .map((row) => RelatedExhibit(
+              exhibit_id: row[0] as int,
+              title: row[1] as String,
+            ))
+        .toList();
+
+    // *** ADD THIS: Fetch images from database ***
+    final images = await getExhibitImages(exhibitId);
+
+    return ExhibitDetails(
+      exhibit_id: row.toColumnMap()['exhibit_id'] as int,
+      title: row.toColumnMap()['title'] as String,
+      shortDesc: row.toColumnMap()['short_desc'] as String? ?? 'No description available',
+      longDesc: row.toColumnMap()['long_desc'] as String? ?? 'No detailed description available',
+      startDate: row.toColumnMap()['start_date'] as DateTime?,
+      finalDate: row.toColumnMap()['final_date'] as DateTime?,
+      eraName: eraName,
+      themes: themes,
+      relatedExhibits: relatedExhibits,
+      images: images, // *** ADD THIS ***
+    );
+  } catch (e) {
+    print('Error fetching exhibit details: $e');
+    return null;
   }
+}
 
 //Feedback 
 Future<bool> submitFeedback({
@@ -191,7 +192,7 @@ Future<bool> submitFeedback({
     try {
     //Get the room_id from the DB based on the exhibit_id
     final result = await connection.query(
-      'SELECT room_id FROM room_exhibit WHERE id = @exhibitId',
+      'SELECT room_id FROM room_exhibit WHERE exhibit_id = @exhibitId',
       substitutionValues: {'exhibitId': exhibitId},
     );
 
@@ -337,5 +338,33 @@ Future<double> getExhibitAverageRating(int exhibitId) async {
       print('Error fetching feedbacks: $e');
       return [];
     }
+  }
+
+    Future<List<ExhibitImage>> getExhibitImages(int exhibitId) async {
+    final result = await connection.query(
+      '''
+      SELECT image_id, img_data, alt_text
+      FROM images
+      WHERE exhibit_id = @exhibit_id
+      ORDER BY image_id
+      ''',
+      substitutionValues: {'exhibit_id': exhibitId},
+    );
+
+    return result.map((row) {
+
+      return ExhibitImage(
+        imageId: row[0] as int,
+        imageData: row[1] as Uint8List,
+        altText: row[2] as String,
+      );
+    }).toList();
+  }
+
+  Future<void> deleteImage(int imageId) async {
+    await connection.query(
+      'DELETE FROM images WHERE image_id = @id',
+      substitutionValues: {'id': imageId},
+    );
   }
 }

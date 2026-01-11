@@ -9,7 +9,6 @@ import 'package:editor_app/data/exhibit.dart';
 import 'dart:typed_data';  // ← ADD THIS IMPORT
 import 'dart:convert';
 
-// ← ADD THIS CLASS (same as in the page file)
 class ExhibitImage {
   final int? imageId;
   final Uint8List imageData;
@@ -184,8 +183,7 @@ Future<int> getOrCreateLongDescId(String text) async {
     );
 
     return result.map((row) {
-      final data = row[1];
-      
+
       return ExhibitImage(
         imageId: row[0] as int,
         imageData: row[1] as Uint8List,
