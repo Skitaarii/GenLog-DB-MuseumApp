@@ -1,10 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:postgres/postgres.dart';
-import 'package:admin_app/data/admin_dao.dart';
 
-import 'package:admin_app/data/visitor_dao.dart';
-import 'package:admin_app/ui/pages/admin_page.dart';
+import 'package:analytic_app/ui/pages/analytics_dashboard_page.dart';
+import 'package:analytic_app/data/analytics_dao.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,37 +18,40 @@ Future<void> main() async {
 
   await connection.open();
 
-  final visitorDao = VisitorDao(connection);
-  final adminDao = AdminDao(connection); 
+  final analyticsDao = AnalyticsDao(connection);
 
   //Session for the visitor
-  final sessionId = await visitorDao.createNewSession();
-  print('New session created: $sessionId');
 
   runApp(MyApp(
-    adminDao: adminDao,
-    sessionId: sessionId,
+    analyticsDao: analyticsDao,
   ));
 }
 
 class MyApp extends StatelessWidget {
-  final AdminDao adminDao; 
-  final int sessionId;
+  final AnalyticsDao analyticsDao;
+
 
   const MyApp({
     super.key,
-    required this.adminDao, 
-    required this.sessionId,
+    required this.analyticsDao,
   });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      //For admin page :
-      home: AdminPage(
-        adminDao: adminDao,
-        sessionId: sessionId,
+      //For analytic page :
+      home: AnalyticsDashboardPage(
+        analyticsDao: analyticsDao,
       ),
+      /*home: AdminPage(
+        adminDao: adminDao,
+        exhibitDao: exhibitDao,
+        roomDao: roomDao,
+        visitorDao: visitorDao,
+        analyticsDao: analyticsDao,
+        sessionId: sessionId,
+      )
+      */
       
     );
   }

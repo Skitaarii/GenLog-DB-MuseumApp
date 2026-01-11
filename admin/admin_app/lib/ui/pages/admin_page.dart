@@ -7,25 +7,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:admin_app/data/admin_dao.dart';
-import 'package:admin_app/data/exhibit_dao.dart';
-import 'package:admin_app/data/room_dao.dart';
-import 'package:admin_app/data/visitor_dao.dart';
-import 'package:admin_app/ui/pages/editors_home_page.dart';
-import 'package:admin_app/ui/pages/qr_code_scan_page.dart';
+
 
 class AdminPage extends StatefulWidget {
   final AdminDao adminDao;
-  final ExhibitDao exhibitDao;
-  final RoomDao roomDao;
-  final VisitorDao visitorDao;
+
   final int sessionId;
 
   const AdminPage({
     super.key,
     required this.adminDao,
-    required this.exhibitDao,
-    required this.roomDao,
-    required this.visitorDao,
+
     required this.sessionId,
   });
 
@@ -166,29 +158,7 @@ class _AdminPageState extends State<AdminPage> {
     }
   }
 
-  void _navigateToVisitorPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => QRCodeScanPage(
-          visitorDao: widget.visitorDao,
-          sessionId: widget.sessionId,
-        ),
-      ),
-    );
-  }
 
-  void _navigateToEditorPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditorsHomePage(
-          exhibitDao: widget.exhibitDao,
-          roomDao: widget.roomDao,
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -383,28 +353,7 @@ class _AdminPageState extends State<AdminPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildNavigationButton(
-                      title: 'Visitor Mode',
-                      icon: Icons.qr_code_scanner,
-                      color: Colors.blue[700]!,
-                      onPressed: _navigateToVisitorPage,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildNavigationButton(
-                      title: 'Editor Mode',
-                      icon: Icons.edit,
-                      color: Colors.purple[700]!,
-                      onPressed: _navigateToEditorPage,
-                    ),
-                  ),
-                ],
-              ),
+            
               const SizedBox(height: 20),
 
               //REFRESH BUTTOn

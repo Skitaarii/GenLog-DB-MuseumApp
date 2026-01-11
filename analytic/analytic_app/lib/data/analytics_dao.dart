@@ -3,7 +3,7 @@
 // Analytics Data Access Object - provides curator insights
 
 import 'package:postgres/postgres.dart';
-import 'package:trying_flutter/data/analytics.dart';
+import 'package:analytic_app/data/analytics.dart';
 
 class AnalyticsDao {
   final PostgreSQLConnection connection;

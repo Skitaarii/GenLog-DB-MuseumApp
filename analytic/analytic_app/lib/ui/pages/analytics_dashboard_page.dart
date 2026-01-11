@@ -3,10 +3,11 @@
 // Analytics Dashboard for curators
 
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/data/analytics_dao.dart';
-import 'package:trying_flutter/data/analytics.dart';
+import 'package:analytic_app/data/analytics_dao.dart';
+import 'package:analytic_app/data/analytics.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+
 
 class AnalyticsDashboardPage extends StatefulWidget {
   final AnalyticsDao analyticsDao;
