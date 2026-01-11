@@ -1,13 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:postgres/postgres.dart';
 import 'package:trying_flutter/data/admin_dao.dart';
 import 'package:trying_flutter/data/exhibit_dao.dart';
 import 'package:trying_flutter/data/room_dao.dart';
 import 'package:trying_flutter/data/visitor_dao.dart';
+import 'package:trying_flutter/data/analytics_dao.dart';
 import 'package:trying_flutter/ui/pages/admin_page.dart';
-import 'package:trying_flutter/ui/pages/editors_home_page.dart';
-import 'package:trying_flutter/ui/pages/qr_code_scan_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +23,8 @@ Future<void> main() async {
   final exhibitDao = ExhibitDao(connection);
   final roomDao = RoomDao(connection);
   final visitorDao = VisitorDao(connection);
-  final adminDao = AdminDao(connection); 
+  final adminDao = AdminDao(connection);
+  final analyticsDao = AnalyticsDao(connection);
 
   //Session for the visitor
   final sessionId = await visitorDao.createNewSession();
@@ -36,6 +35,7 @@ Future<void> main() async {
     roomDao: roomDao,
     visitorDao: visitorDao,
     adminDao: adminDao,
+    analyticsDao: analyticsDao,
     sessionId: sessionId,
   ));
 }
@@ -44,7 +44,8 @@ class MyApp extends StatelessWidget {
   final ExhibitDao exhibitDao;
   final RoomDao roomDao;
   final VisitorDao visitorDao;
-  final AdminDao adminDao; 
+  final AdminDao adminDao;
+  final AnalyticsDao analyticsDao;
   final int sessionId;
 
   const MyApp({
@@ -52,7 +53,8 @@ class MyApp extends StatelessWidget {
     required this.exhibitDao,
     required this.roomDao,
     required this.visitorDao,
-    required this.adminDao, 
+    required this.adminDao,
+    required this.analyticsDao,
     required this.sessionId,
   });
 
@@ -65,6 +67,7 @@ class MyApp extends StatelessWidget {
         exhibitDao: exhibitDao,
         roomDao: roomDao,
         visitorDao: visitorDao,
+        analyticsDao: analyticsDao,
         sessionId: sessionId,
       ),
       

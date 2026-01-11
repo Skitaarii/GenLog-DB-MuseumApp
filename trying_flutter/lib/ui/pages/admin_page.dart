@@ -12,12 +12,16 @@ import 'package:trying_flutter/data/room_dao.dart';
 import 'package:trying_flutter/data/visitor_dao.dart';
 import 'package:trying_flutter/ui/pages/editors_home_page.dart';
 import 'package:trying_flutter/ui/pages/qr_code_scan_page.dart';
+import 'package:trying_flutter/data/analytics_dao.dart';
+import 'package:trying_flutter/ui/pages/analytics_dashboard_page.dart';
+import 'package:trying_flutter/data/analytics_test_data_generator.dart';
 
 class AdminPage extends StatefulWidget {
   final AdminDao adminDao;
   final ExhibitDao exhibitDao;
   final RoomDao roomDao;
   final VisitorDao visitorDao;
+  final AnalyticsDao analyticsDao;
   final int sessionId;
 
   const AdminPage({
@@ -26,6 +30,7 @@ class AdminPage extends StatefulWidget {
     required this.exhibitDao,
     required this.roomDao,
     required this.visitorDao,
+    required this.analyticsDao,
     required this.sessionId,
   });
 
@@ -76,64 +81,64 @@ class _AdminPageState extends State<AdminPage> {
   }
 
   Future<void> _resetDatabase() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text('Warning', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'This will DELETE ALL DATA from the database.\n'
-          'This action cannot be undone!\n\n'
-          'Are you sure you want to proceed?',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.purpleAccent)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('RESET DATABASE'),
-          ),
-        ],
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Colors.grey[900],
+      title: const Text('Warning', style: TextStyle(color: Colors.white)),
+      content: const Text(
+        'This will DELETE ALL DATA from the database.\n'
+        'This action cannot be undone!\n\n'
+        'Are you sure you want to proceed?',
+        style: TextStyle(color: Colors.white70),
       ),
-    );
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel', style: TextStyle(color: Colors.purpleAccent)),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          child: const Text('RESET DATABASE'),
+        ),
+      ],
+    ),
+  );
 
-    if (confirmed != true) return;
+  if (confirmed != true) return;
 
-    setState(() {
-      _isResetting = true;
-      _statusMessage = 'Resetting database...';
-    });
+  setState(() {
+    _isResetting = true;
+    _statusMessage = 'Resetting database...';
+  });
 
-    try {
-      final success = await widget.adminDao.resetDatabase();
-      
-      if (success) {
-        setState(() {
-          _statusMessage = '✅ Database reset successfully!';
-          _databaseEmpty = true;
-          _hasSampleData = false;
-        });
-      } else {
-        setState(() {
-          _statusMessage = '❌ Failed to reset database';
-        });
-      }
-    } catch (e) {
+  try {
+    final success = await widget.adminDao.resetDatabase();
+    
+    if (success) {
       setState(() {
-        _statusMessage = '❌ Error: $e';
+        _statusMessage = '✅ Database reset successfully!';
+        _databaseEmpty = true;
+        _hasSampleData = false;
       });
-    } finally {
+    } else {
       setState(() {
-        _isResetting = false;
+        _statusMessage = '❌ Failed to reset database';
       });
     }
+  } catch (e) {
+    setState(() {
+      _statusMessage = '❌ Error: $e';
+    });
+  } finally {
+    setState(() {
+      _isResetting = false;
+    });
   }
+}
+
+
 
   Future<void> _populateDatabase() async {
     setState(() {
@@ -165,6 +170,8 @@ class _AdminPageState extends State<AdminPage> {
       });
     }
   }
+
+  
 
   void _navigateToVisitorPage() {
     Navigator.push(
@@ -336,6 +343,33 @@ class _AdminPageState extends State<AdminPage> {
               ),
               const SizedBox(height: 40),
 
+              //DEBUG BUTTON HAHA ITS THE FUNNY BUTTON
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final scans = await widget.adminDao.connection.query(
+                    'SELECT session_id, exhibit_id, scanned_at FROM QR_Scan ORDER BY scanned_at DESC LIMIT 5'
+                  );
+    
+                  print('\nRecent scans:');
+                  for (final row in scans) {
+                    print('Session ${row[0]}: Exhibit ${row[1]} at ${row[2]}');
+                  }
+    
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Check console for scan data'),
+                      backgroundColor: Colors.blue,
+                    ),
+                  );
+                },
+                icon: Icon(Icons.bug_report),
+                label: Text('🔍 Check Database'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[700],
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+
               //INFORMATIONS - Waanted by the AI, not really useful
               /*
               Container(
@@ -384,7 +418,7 @@ class _AdminPageState extends State<AdminPage> {
               ),
               const SizedBox(height: 16),
               
-              Row(
+                            Row(
                 children: [
                   Expanded(
                     child: _buildNavigationButton(
@@ -404,6 +438,14 @@ class _AdminPageState extends State<AdminPage> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12), // ⭐ NEW
+              // ⭐ NEW ANALYTICS BUTTON
+              _buildNavigationButton(
+                title: 'Analytics Dashboard',
+                icon: Icons.analytics,
+                color: Colors.orange[700]!,
+                onPressed: _navigateToAnalyticsPage,
               ),
               const SizedBox(height: 20),
 
@@ -542,6 +584,17 @@ class _AdminPageState extends State<AdminPage> {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToAnalyticsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AnalyticsDashboardPage(
+          analyticsDao: widget.analyticsDao,
         ),
       ),
     );

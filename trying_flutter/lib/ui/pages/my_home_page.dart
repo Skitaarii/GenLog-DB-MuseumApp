@@ -3,7 +3,6 @@
 // Description : Home page (a test page), has to be deleted
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:trying_flutter/data/exhibit_dao.dart';
 import 'package:trying_flutter/data/room_dao.dart';
 import 'package:trying_flutter/ui/pages/editors_home_page.dart';

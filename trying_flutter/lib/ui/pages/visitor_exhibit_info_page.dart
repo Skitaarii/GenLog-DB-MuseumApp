@@ -933,7 +933,7 @@ void _showErrorDialog(String message) {
                   ),
                 ),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 20),
           ],
 

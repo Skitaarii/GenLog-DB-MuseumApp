@@ -290,15 +290,15 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 return;
                               }
 
-                              final short_desc = await widget.exhibitDao.getOrCreateShortDescId(shortDescController.text);
-                              final long_desc = await widget.exhibitDao.getOrCreateLongDescId(longDescController.text);
+                              final shortDesc = await widget.exhibitDao.getOrCreateShortDescId(shortDescController.text);
+                              final longDesc = await widget.exhibitDao.getOrCreateLongDescId(longDescController.text);
 
                               await widget.exhibitDao.insertExhibit(
                                 title: titleController.text,
                                 startDate: startDate,
                                 finalDate: finalDate,
-                                shortDescId: short_desc,
-                                longDescId: long_desc,
+                                shortDescId: shortDesc,
+                                longDescId: longDesc,
                               );
 
                               Navigator.pop(context);
@@ -887,7 +887,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                             ),
                           ],
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),
