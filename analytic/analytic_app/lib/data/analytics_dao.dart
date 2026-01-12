@@ -390,7 +390,7 @@ Future<List<DailyStats>> getDailyStats({
           r.room_id,
           r.name,
           COUNT(DISTINCT rv.session_id) AS visit_count,
-          AVG(rv.dwell_seconds) AS avg_dwell_sec,
+          CAST(AVG(rv.dwell_seconds) AS INTEGER) AS avg_dwell_sec,
           COUNT(DISTINCT re.exhibit_id) AS exhibit_count
         FROM Room r
         LEFT JOIN room_visits rv ON r.room_id = rv.room_id
@@ -425,31 +425,52 @@ Future<List<DailyStats>> getDailyStats({
   }) async {
     try {
       final result = await connection.query('''
+        WITH scan_sequences AS (
+          SELECT 
+            qs1.session_id,
+            qs1.exhibit_id,
+            qs1.room_id,
+            qs1.scanned_at,
+            EXTRACT(EPOCH FROM (qs2.scanned_at - qs1.scanned_at)) AS dwell_seconds
+          FROM QR_Scan qs1
+          LEFT JOIN QR_Scan qs2 
+            ON qs1.session_id = qs2.session_id 
+            AND qs2.scanned_at > qs1.scanned_at
+            AND NOT EXISTS (
+              SELECT 1 FROM QR_Scan qs3
+              WHERE qs3.session_id = qs1.session_id
+                AND qs3.scanned_at > qs1.scanned_at
+                AND qs3.scanned_at < qs2.scanned_at
+            )
+          WHERE 1=1
+            ${startDate != null ? "AND qs1.scanned_at >= @startDate" : ""}
+            ${endDate != null ? "AND qs1.scanned_at <= @endDate" : ""}
+        )
         SELECT 
-          DATE(qs.scanned_at) AS visit_date,
-          qs.session_id,
-          qs.exhibit_id,
+          DATE(ss.scanned_at) AS visit_date,
+          ss.session_id,
+          ss.exhibit_id,
           e.title AS exhibit_title,
-          qs.room_id,
+          ss.room_id,
           r.name AS room_name,
-          qs.scanned_at,
+          ss.scanned_at,
+          ss.dwell_seconds,
           f.rating
-        FROM QR_Scan qs
-        JOIN Exhibits e ON qs.exhibit_id = e.exhibit_id
-        JOIN Room r ON qs.room_id = r.room_id
-        LEFT JOIN Feedback f ON qs.exhibit_id = f.exhibit_id AND qs.session_id = f.session_id
-        WHERE 1=1
-          ${startDate != null ? "AND qs.scanned_at >= @startDate" : ""}
-          ${endDate != null ? "AND qs.scanned_at <= @endDate" : ""}
-        ORDER BY qs.scanned_at
+        FROM scan_sequences ss
+        JOIN Exhibits e ON ss.exhibit_id = e.exhibit_id
+        JOIN Room r ON ss.room_id = r.room_id
+        LEFT JOIN Feedback f ON ss.exhibit_id = f.exhibit_id AND ss.session_id = f.session_id
+        ORDER BY ss.scanned_at
       ''', substitutionValues: {
         if (startDate != null) 'startDate': startDate,
         if (endDate != null) 'endDate': endDate,
       });
 
       final csvLines = <String>[AnalyticsExportRow.csvHeader()];
-      
+    
       for (final row in result) {
+        final dwellSeconds = row[7] != null ? _toInt(row[7]) : null;
+      
         final exportRow = AnalyticsExportRow(
           date: row[0] as DateTime,
           sessionId: _toInt(row[1]),
@@ -458,7 +479,8 @@ Future<List<DailyStats>> getDailyStats({
           roomId: _toInt(row[4]),
           roomName: row[5] as String,
           scannedAt: row[6] as DateTime,
-          rating: row[7] != null ? _toInt(row[7]) : null,
+          dwellTime: dwellSeconds != null ? Duration(seconds: dwellSeconds) : null,
+          rating: row[8] != null ? _toInt(row[8]) : null,
         );
         csvLines.add(exportRow.toCsvRow());
       }

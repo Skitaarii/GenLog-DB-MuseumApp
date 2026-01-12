@@ -17,7 +17,7 @@ Future<void> main() async {
   // - Emulator: '10.0.2.2' (localhost alias for Android emulator)
   // - Physical device: Actual server address needed
   final connection = PostgreSQLConnection(
-    '10.0.2.2', //for emulation : '10.0.2.2' / for physical device : 'localhost'
+    'localhost', //for emulation : '10.0.2.2' / for physical device : 'localhost'
     5432,
     'museum_DB',
     username: 'admin',
