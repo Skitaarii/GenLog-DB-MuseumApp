@@ -141,7 +141,7 @@ class AdminDao {
           image_id SERIAL,
           exhibit_id INT,
           alt_text VARCHAR(100),
-          img_path TEXT,
+          img_data BYTEA NOT NULL,
           PRIMARY KEY (image_id),
           FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id)
         );

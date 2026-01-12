@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 
 class EditorButton extends StatelessWidget {
   final String label;
-  final IconData? icon; // Ajoute ce paramètre
+  final IconData? icon; 
   final VoidCallback onTap;
 
   const EditorButton({
     super.key,
     required this.label,
-    this.icon, // Rend-le optionnel
+    this.icon, 
     required this.onTap,
   });
 

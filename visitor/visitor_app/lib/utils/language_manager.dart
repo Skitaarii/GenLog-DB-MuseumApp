@@ -1,9 +1,12 @@
 // language_manager.dart
 // Multilingual system for museum application
-// Supports FR, EN, IT, DE
+// Supports FR, EN, IT, DE - Manages language state and UI translations
 
 import 'package:flutter/material.dart';
 
+// Enum representing all supported languages in the app
+// Each language has: code (for Flutter locale), shortCode (for UI display),
+// displayName (full name), and icon (for language selector)
 enum AppLanguage {
   french('fr', 'FR', 'Français', Icons.flag),
   english('en', 'EN', 'English', Icons.flag),
@@ -18,6 +21,8 @@ enum AppLanguage {
   final IconData icon;
 }
 
+// Singleton class managing app language state using ChangeNotifier pattern
+// Notifies listeners when language changes to trigger UI rebuilds
 class LanguageManager extends ChangeNotifier {
   static final LanguageManager _instance = LanguageManager._internal();
   factory LanguageManager() => _instance;
@@ -27,7 +32,7 @@ class LanguageManager extends ChangeNotifier {
   
   AppLanguage get currentLanguage => _currentLanguage;
   String get languageCode => _currentLanguage.code;
-  String get dbColumnName => _currentLanguage.code.toUpperCase(); // FR, EN, IT, DE
+  String get dbColumnName => _currentLanguage.code.toUpperCase(); // Returns FR, EN, IT, DE for DB queries
 
   void setLanguage(AppLanguage language) {
     if (_currentLanguage != language) {
@@ -38,7 +43,8 @@ class LanguageManager extends ChangeNotifier {
   }
 }
 
-// Language selector widget for AppBars
+// Reusable dropdown widget for language selection, typically used in AppBars
+// Shows either short code (EN) or full name (English) based on showFullNames flag
 class LanguageSelector extends StatelessWidget {
   final bool showFullNames;
   final Color? textColor;
@@ -57,6 +63,7 @@ class LanguageSelector extends StatelessWidget {
         final manager = LanguageManager();
         
         return PopupMenuButton<AppLanguage>(
+          // Custom styled button with language icon and current language display
           icon: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -96,6 +103,7 @@ class LanguageSelector extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: Colors.purple[700]!),
           ),
+          // Build dropdown menu items for all supported languages
           itemBuilder: (context) => AppLanguage.values.map((lang) {
             final isSelected = lang == manager.currentLanguage;
             return PopupMenuItem<AppLanguage>(
@@ -146,36 +154,33 @@ class LanguageSelector extends StatelessWidget {
   }
 }
 
-// UI Strings translations
+// Centralized translation system for all UI strings in the app
+// Uses a nested map structure: Language -> Key -> Translation
 class AppStrings {
+  // Main translation database - each language maps to its key-value pairs
+  // English serves as the fallback language if a translation is missing
   static final Map<AppLanguage, Map<String, String>> _strings = {
     AppLanguage.french: {
       'exhibit_info': 'Informations sur l\'exposition',
-
-      
       'session': 'Session',
       'exhibit': 'Exposition',
       'error': 'Erreur',
-      
 
-      //INFOS EXHIBIT
+      // INFOS EXHIBIT
       'give_feedback': 'Donner un avis',
       'thx_feedback': 'Merci pour votre retour !',
       'fail_feedback': 'Envoie du retour échoué. S\'il vous plaît réessayez.',
       'all_feedback': 'Tous les retours',
       'no_feedback': 'Pas de retour pour l\'instant.',
       'close': 'Fermer',
-
       'rate':'Combien noteriez-vous cette exposition ?',
       'select_rating':'S\'il vous plaît, notez',
       'no_rate': 'Pas de notes pour l\'instant',
       'comment':'Votre commentaire (optionnel)',
       'share': 'Partagez vos pensées vis-à-vis de cette exposition... ',
-
       'review': 'avis',
       'reviews': 'avis',
       'view_all': 'Voir tous',
-
       'description': 'Description',
       'more_information': 'Plus d\'informations',
       'from':'Du',
@@ -190,8 +195,7 @@ class AppStrings {
       'submit':'Envoyer',
       'no_image':'Pas d\'images disponbiles',
 
-
-      //QR CODE
+      // QR CODE
       'exhibit_notfound': 'Exposition pas trouvée',
       'qrcode_invalid': 'Format QR code invalide: ',
       'enter_exhibit':'Entrez l\ID de l\'exposition',
@@ -206,7 +210,7 @@ class AppStrings {
       'exhibit_load': 'L\'exposition chargera automatiquement',
       'manual_id':'Entrez l\'id manuellement',
 
-      //BROWSE PAGE
+      // BROWSE PAGE
       'browse_museum': 'Explorer le musée',
       'favorites': 'Favoris',
       'itineraries': 'Itinéraires',
@@ -219,16 +223,13 @@ class AppStrings {
       'include': 'Inclus:',
       'more': 'plus',
 
-      //ITINERARY DETAIL
+      // ITINERARY DETAIL
       'add_fav': 'Ajouté aux favoris',
       'rem_fav': 'Retiré des favoris',
       'no_exhibit_iti': 'Pas d\'exposition dans cet itinéraire',
-
-
     },
     AppLanguage.english: {
       'exhibit_info': 'Exhibit information',
-
       'session': 'Session',
       'exhibit': 'Exhibit',
       'error': 'Error',
@@ -240,17 +241,14 @@ class AppStrings {
       'all_feedback': 'All feedback',
       'no_feedback': 'No feedback yet.',
       'close': 'Close',
-
       'rate': 'How would you rate this exhibit?',
       'select_rating': 'Please select a rating',
       'no_rate': 'No ratings yet',
       'comment': 'Your comment (optional)',
       'share': 'Share your thoughts about this exhibit...',
-
       'review': 'review',
       'reviews': 'reviews',
       'view_all': 'View all',
-
       'description': 'Description',
       'more_information': 'More information',
       'from': 'From',
@@ -279,7 +277,7 @@ class AppStrings {
       'camera_qr': 'Point the camera at the QR code',
       'exhibit_load': 'The exhibit will load automatically',
       'manual_id': 'Enter ID manually',
-
+      
       // BROWSE PAGE
       'browse_museum': 'Browse the museum',
       'favorites': 'Favorites',
@@ -298,8 +296,7 @@ class AppStrings {
       'rem_fav': 'Removed from favorites',
       'no_exhibit_iti': 'No exhibits in this itinerary',
     },
-
-    AppLanguage.italian: {
+        AppLanguage.italian: {
       'exhibit_info': 'Informazioni sulla mostra',
 
       'session': 'Sessione',
@@ -444,16 +441,18 @@ class AppStrings {
       'rem_fav': 'Aus Favoriten entfernt',
       'no_exhibit_iti': 'Keine Ausstellung in dieser Route',
     },
-
   };
 
+  // Retrieves translation for a given key in the current language
+  // Falls back to English if translation not found in current language
   static String get(String key) {
     final lang = LanguageManager().currentLanguage;
     return _strings[lang]?[key] ?? _strings[AppLanguage.english]?[key] ?? key;
   }
 }
 
-// Extension for easy access to translations
+// Convenience extension for cleaner translation syntax in UI code
+// Example: 'exhibit'.tr returns translated string for current language
 extension StringTranslation on String {
   String get tr => AppStrings.get(this);
 }

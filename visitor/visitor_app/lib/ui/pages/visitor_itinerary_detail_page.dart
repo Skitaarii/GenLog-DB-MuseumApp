@@ -1,6 +1,7 @@
 // Veuillet Gaëtan
 // 2025
 // Description : Itinerary detail page showing all exhibits in the itinerary
+// Displays a list of exhibits within a selected itinerary with favorite toggling
 
 import 'package:flutter/material.dart';
 import 'package:visitor_app/data/itinerary.dart';
@@ -9,12 +10,11 @@ import 'package:visitor_app/data/favorites_dao.dart';
 import 'package:visitor_app/ui/pages/visitor_exhibit_info_page.dart';
 import 'package:visitor_app/utils/language_manager.dart';
 
-
 class VisitorItineraryDetailPage extends StatefulWidget {
-  final ItineraryWithExhibits itinerary;
-  final VisitorDao visitorDao;
-  final FavoritesDao favoritesDao;
-  final int sessionId;
+  final ItineraryWithExhibits itinerary; // Itinerary data with its exhibits
+  final VisitorDao visitorDao; // For exhibit details retrieval
+  final FavoritesDao favoritesDao; // For favorite status management
+  final int sessionId; // Current visitor session identifier
 
   const VisitorItineraryDetailPage({
     super.key,
@@ -31,20 +31,23 @@ class VisitorItineraryDetailPage extends StatefulWidget {
 
 class _VisitorItineraryDetailPageState
     extends State<VisitorItineraryDetailPage> {
+  // Map to track favorite status for each exhibit (exhibit_id -> isFavorite)
   final Map<int, bool> _favoriteStatus = {};
-  bool _isLoadingFavorites = true;
+  bool _isLoadingFavorites = true; // Loading state for favorite data
 
   @override
   void initState() {
     super.initState();
-    _loadFavoriteStatus();
+    _loadFavoriteStatus(); // Load initial favorite states on page creation
   }
 
+  // Load favorite status for all exhibits in the itinerary
   Future<void> _loadFavoriteStatus() async {
     setState(() {
       _isLoadingFavorites = true;
     });
 
+    // Check favorite status for each exhibit in the itinerary
     for (final exhibit in widget.itinerary.exhibits) {
       final isFav = await widget.favoritesDao.isFavorite(
         sessionId: widget.sessionId,
@@ -60,6 +63,7 @@ class _VisitorItineraryDetailPageState
     }
   }
 
+  // Toggle favorite status for a specific exhibit
   Future<void> _toggleFavorite(int exhibitId) async {
     final success = await widget.favoritesDao.toggleFavorite(
       sessionId: widget.sessionId,
@@ -68,15 +72,17 @@ class _VisitorItineraryDetailPageState
 
     if (success && mounted) {
       setState(() {
+        // Flip the favorite status
         _favoriteStatus[exhibitId] = !(_favoriteStatus[exhibitId] ?? false);
       });
 
+      // Show confirmation snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             _favoriteStatus[exhibitId] == true
-                ? 'add_fav'.tr
-                : 'rem_fav'.tr,
+                ? 'add_fav'.tr // Added to favorites
+                : 'rem_fav'.tr, // Removed from favorites
           ),
           backgroundColor: Colors.purple[700],
           duration: const Duration(seconds: 1),
@@ -85,6 +91,7 @@ class _VisitorItineraryDetailPageState
     }
   }
 
+  // Navigate to exhibit detail page when an exhibit is tapped
   Future<void> _navigateToExhibitDetail(int exhibitId) async {
     final exhibitDetails = await widget.visitorDao.getExhibitDetails(exhibitId);
 
@@ -100,7 +107,7 @@ class _VisitorItineraryDetailPageState
           ),
         ),
       );
-      // Refresh favorite status when coming back
+      // Refresh favorite status after returning from exhibit detail
       _loadFavoriteStatus();
     } else {
       if (mounted) {
@@ -132,7 +139,7 @@ class _VisitorItineraryDetailPageState
       ),
       body: Column(
         children: [
-          // Header info
+          // Header section with itinerary title and exhibit count
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -171,6 +178,7 @@ class _VisitorItineraryDetailPageState
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
+                // Badge showing number of exhibits in itinerary
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -204,9 +212,10 @@ class _VisitorItineraryDetailPageState
             ),
           ),
 
-          // Exhibits list
+          // Main content area - list of exhibits
           Expanded(
             child: widget.itinerary.exhibits.isEmpty
+                // Empty state when itinerary has no exhibits
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -227,6 +236,7 @@ class _VisitorItineraryDetailPageState
                       ],
                     ),
                   )
+                // List of exhibits with step numbers and favorite buttons
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: widget.itinerary.exhibits.length,
@@ -257,7 +267,7 @@ class _VisitorItineraryDetailPageState
                               padding: const EdgeInsets.all(16),
                               child: Row(
                                 children: [
-                                  // Step number
+                                  // Step number indicator
                                   Container(
                                     width: 40,
                                     height: 40,
@@ -283,7 +293,7 @@ class _VisitorItineraryDetailPageState
                                   ),
                                   const SizedBox(width: 16),
                                   
-                                  // Exhibit info
+                                  // Exhibit title and ID
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,7 +318,7 @@ class _VisitorItineraryDetailPageState
                                     ),
                                   ),
 
-                                  // Favorite button
+                                  // Favorite toggle button (only when loading is complete)
                                   if (!_isLoadingFavorites)
                                     IconButton(
                                       icon: Icon(
@@ -319,7 +329,7 @@ class _VisitorItineraryDetailPageState
                                       onPressed: () => _toggleFavorite(exhibit.exhibit_id),
                                     ),
                                   
-                                  // Arrow
+                                  // Navigation arrow
                                   Icon(
                                     Icons.arrow_forward_ios,
                                     color: Colors.purple[300],

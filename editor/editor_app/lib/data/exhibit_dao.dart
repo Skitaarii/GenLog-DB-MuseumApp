@@ -1,14 +1,14 @@
-//@ : Veuillet Gaëtan
+// Veuillet Gaëtan
 // 2025
-// Data Access Object for User entity
-// WHAT DA HELL IS GOING ON
+// Data Access Object for Exhibit entity with image support
 
 import 'package:flutter/material.dart';
 import 'package:postgres/postgres.dart';
 import 'package:editor_app/data/exhibit.dart';
-import 'dart:typed_data';  // ← ADD THIS IMPORT
+import 'dart:typed_data';
 import 'dart:convert';
 
+/// Image model for storing exhibit photos with metadata
 class ExhibitImage {
   final int? imageId;
   final Uint8List imageData;
@@ -21,12 +21,14 @@ class ExhibitImage {
   });
 }
 
+/// DAO for exhibit management including multilingual descriptions and images
+/// WARNING: Current description system only supports English
 class ExhibitDao {
   final PostgreSQLConnection connection;
 
   ExhibitDao(this.connection);
 
-  // ← CHANGED: Now returns int (the new exhibit_id)
+  /// Creates a new exhibit and returns its generated ID
   Future<int> insertExhibit({
     required String title,
     DateTime? startDate,
@@ -51,35 +53,40 @@ class ExhibitDao {
     return result.first[0] as int;
   }
 
-// Need to be changed for each language, absoluetly no idea for now how to do it AHAHAHAH
-Future<int> getOrCreateShortDescId(String text) async {
-  final result = await connection.query(
-    'SELECT id FROM short_desc WHERE en = @en', 
-    substitutionValues: {'en': text},
-  );
-  if (result.isNotEmpty) return result.first[0] as int;
+  // TODO: Implement multilingual description support
+  // Currently only works with English ('en' column)
 
-  final insert = await connection.query(
-    'INSERT INTO short_desc(en) VALUES (@en) RETURNING id',
-    substitutionValues: {'en': text},
-  );
-  return insert.first[0] as int;
-}
+  /// Gets existing short description ID or creates new English entry
+  Future<int> getOrCreateShortDescId(String text) async {
+    final result = await connection.query(
+      'SELECT id FROM short_desc WHERE en = @en', 
+      substitutionValues: {'en': text},
+    );
+    if (result.isNotEmpty) return result.first[0] as int;
 
-Future<int> getOrCreateLongDescId(String text) async {
-  final result = await connection.query(
-    'SELECT id FROM long_desc WHERE en = @en', 
-    substitutionValues: {'en': text},
-  );
-  if (result.isNotEmpty) return result.first[0] as int;
+    final insert = await connection.query(
+      'INSERT INTO short_desc(en) VALUES (@en) RETURNING id',
+      substitutionValues: {'en': text},
+    );
+    return insert.first[0] as int;
+  }
 
-  final insert = await connection.query(
-    'INSERT INTO long_desc(en) VALUES (@en) RETURNING id',
-    substitutionValues: {'en': text},
-  );
-  return insert.first[0] as int;
-}
+  /// Gets existing long description ID or creates new English entry
+  Future<int> getOrCreateLongDescId(String text) async {
+    final result = await connection.query(
+      'SELECT id FROM long_desc WHERE en = @en', 
+      substitutionValues: {'en': text},
+    );
+    if (result.isNotEmpty) return result.first[0] as int;
 
+    final insert = await connection.query(
+      'INSERT INTO long_desc(en) VALUES (@en) RETURNING id',
+      substitutionValues: {'en': text},
+    );
+    return insert.first[0] as int;
+  }
+
+  /// Updates all exhibit fields including descriptions
   Future<void> update({
     required int exhibitId,
     required String title,
@@ -114,17 +121,23 @@ Future<int> getOrCreateLongDescId(String text) async {
     );
   }
 
-
+  /// Permanently deletes an exhibit (cascades to related images)
   Future<void> deleteExhibit(int exhibitId) async {
-    await connection.query(
-      '''
-      DELETE FROM exhibits WHERE exhibit_id = @id
-      ''',
-      substitutionValues: {'id': exhibitId},
-    );
-  }
+  // Supprimer d'abord les images
+  await connection.query(
+    'DELETE FROM images WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
+  // Supprimer ensuite l'exhibit
+  await connection.query(
+    'DELETE FROM exhibits WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+}
 
 
+  /// Gets raw exhibit data by ID (returns PostgreSQL rows)
   Future<List<List<dynamic>>> getExhibitById(int id) async {
     return await connection.query(
       '''
@@ -134,6 +147,7 @@ Future<int> getOrCreateLongDescId(String text) async {
     );
   }
 
+  /// Retrieves all exhibits without description text
   Future<List<Exhibit>> getAllExhibits() async {
     final result = await connection.query(
       'SELECT exhibit_id, title, short_desc_id, long_desc_id, start_date, final_date FROM exhibits',
@@ -142,15 +156,16 @@ Future<int> getOrCreateLongDescId(String text) async {
     return result.map((row){
       return Exhibit(
         exhibit_id: row[0] as int,
-        title : row[1] as String,
-        short_desc_id :row[2] as int,
-        long_desc_id : row[3] as int,
+        title: row[1] as String,
+        short_desc_id: row[2] as int,
+        long_desc_id: row[3] as int,
         startDate: row[4] as DateTime?,
         finalDate: row[5] as DateTime?,
       );
     }).toList();
   }
 
+  /// Inserts an image for an exhibit using base64 encoding for binary data
   Future<void> insertImage({
     required int exhibitId,
     required Uint8List imageData,
@@ -168,9 +183,9 @@ Future<int> getOrCreateLongDescId(String text) async {
         'alt_text': altText,
       },
     );
-    // Explicitly tell postgres this is binary data
   }
 
+  /// Retrieves all images associated with an exhibit
   Future<List<ExhibitImage>> getExhibitImages(int exhibitId) async {
     final result = await connection.query(
       '''
@@ -183,7 +198,6 @@ Future<int> getOrCreateLongDescId(String text) async {
     );
 
     return result.map((row) {
-
       return ExhibitImage(
         imageId: row[0] as int,
         imageData: row[1] as Uint8List,
@@ -192,6 +206,7 @@ Future<int> getOrCreateLongDescId(String text) async {
     }).toList();
   }
 
+  /// Deletes a specific image by its ID
   Future<void> deleteImage(int imageId) async {
     await connection.query(
       'DELETE FROM images WHERE image_id = @id',

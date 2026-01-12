@@ -1,5 +1,10 @@
-import 'dart:typed_data'; 
+// Veuillet Gaëtan
+// 2025
+// Data models for museum exhibits and related entities
 
+import 'dart:typed_data';
+
+/// Image associated with an exhibit
 class ExhibitImage {
   final int? imageId;
   final Uint8List imageData;
@@ -12,6 +17,7 @@ class ExhibitImage {
   });
 }
 
+/// Complete details for a museum exhibit
 class ExhibitDetails {
   final int exhibit_id;
   final String title;
@@ -33,13 +39,14 @@ class ExhibitDetails {
     this.startDate,
     this.finalDate,
     this.imagePath,
-    this.images = const [], // *** ADD THIS ***
+    this.images = const [],
     this.eraName,
     required this.themes,
     required this.relatedExhibits,
   });
 }
 
+/// Simplified exhibit for related items display
 class RelatedExhibit {
   final int exhibit_id;
   final String title;
@@ -50,6 +57,7 @@ class RelatedExhibit {
   });
 }
 
+/// Visitor feedback for an exhibit
 class ExhibitFeedback {
   final int exhibit_id;
   final String comment;
@@ -64,6 +72,7 @@ class ExhibitFeedback {
   });
 }
 
+/// QR code scan record
 class QRScan {
   final int session_id;
   final int room_id;

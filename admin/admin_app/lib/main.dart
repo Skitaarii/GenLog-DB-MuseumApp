@@ -6,9 +6,16 @@ import 'package:admin_app/data/admin_dao.dart';
 import 'package:admin_app/data/visitor_dao.dart';
 import 'package:admin_app/ui/pages/admin_page.dart';
 
+// Main entry point of the Flutter application
 Future<void> main() async {
+  // Required Flutter bindings initialization before any operations
   WidgetsFlutterBinding.ensureInitialized();
 
+
+  // PostgreSQL database connection configuration
+  // Note: IP address varies by environment:
+  // - Emulator: '10.0.2.2' (localhost alias for Android emulator)
+  // - Physical device: Actual server address needed
   final connection = PostgreSQLConnection(
     '10.0.2.2', //for emulation : '10.0.2.2' / for physical device : 'localhost'
     5432,
@@ -17,6 +24,7 @@ Future<void> main() async {
     password: 'eaeaoh',
   );
 
+  // Establish connection to the database
   await connection.open();
 
   final visitorDao = VisitorDao(connection);

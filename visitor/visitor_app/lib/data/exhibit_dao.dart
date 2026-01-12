@@ -33,7 +33,6 @@ class ExhibitDao {
     );
   }
 
-// Need to be changed for each language, absoluetly no idea for now how to do it AHAHAHAH
 Future<int> getOrCreateShortDescId(String text) async {
   final result = await connection.query(
     'SELECT id FROM short_desc WHERE en = @en', 

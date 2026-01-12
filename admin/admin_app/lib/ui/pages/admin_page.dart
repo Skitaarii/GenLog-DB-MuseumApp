@@ -2,7 +2,6 @@
 // 2025
 // Description : Admin page to delete/create a sample DB. Also, have some button to navigate threw the different apps (for now visitor and editors)
 // Partially done with AI (goofy ahh emoji).
-// TODO : WHEN ANALYTICS APP ARE FINISHED, NEED TO LINK IT TO HERE TOO
 
 
 import 'package:flutter/material.dart';
@@ -307,41 +306,6 @@ class _AdminPageState extends State<AdminPage> {
               const SizedBox(height: 40),
 
               //INFORMATIONS - Waanted by the AI, not really useful
-              /*
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    
-                    const Text(
-                      'Sample Data Includes:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    _buildInfoItem('• 6 Exhibits with detailed descriptions'),
-                    _buildInfoItem('• 5 Rooms with logical names'),
-                    _buildInfoItem('• Room-Exhibit associations'),
-                    _buildInfoItem('• 5 Historical Eras (Renaissance, etc.)'),
-                    _buildInfoItem('• 5 Themes (Art, Science, History, etc.)'),
-                    _buildInfoItem('• Sample feedback and ratings'),
-                    _buildInfoItem('• Sample QR scans'),
-                    _buildInfoItem('• Tags and thematic associations'),
-                    
-                  ],
-                ),
-              ),
-              */
-              //const SizedBox(height: 40),
 
               //NAV BUTTOn
               const Text(

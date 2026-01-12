@@ -1,6 +1,7 @@
 // Veuillet Gaëtan
 // 2025
 // Description : Browse page with Itineraries and Favorites tabs
+// Main browsing interface showing available itineraries and user's favorite exhibits
 
 import 'package:flutter/material.dart';
 import 'package:visitor_app/data/itinerary_dao.dart';
@@ -11,7 +12,6 @@ import 'package:visitor_app/data/exhibit.dart';
 import 'package:visitor_app/ui/pages/visitor_itinerary_detail_page.dart';
 import 'package:visitor_app/ui/pages/visitor_exhibit_info_page.dart';
 import 'package:visitor_app/utils/language_manager.dart';
-
 
 class VisitorBrowsePage extends StatefulWidget {
   final ItineraryDao itineraryDao;
@@ -33,17 +33,18 @@ class VisitorBrowsePage extends StatefulWidget {
 
 class _VisitorBrowsePageState extends State<VisitorBrowsePage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  late Future<List<ItineraryWithExhibits>> _itinerariesFuture;
-  late Future<List<ExhibitLite>> _favoritesFuture;
+  late TabController _tabController; // Controls switching between tabs
+  late Future<List<ItineraryWithExhibits>> _itinerariesFuture; // Async data for itineraries
+  late Future<List<ExhibitLite>> _favoritesFuture; // Async data for favorites
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _loadData();
+    _tabController = TabController(length: 2, vsync: this); // Two tabs: Itineraries and Favorites
+    _loadData(); // Load initial data
   }
 
+  // Load both itineraries and favorites data
   void _loadData() {
     _itinerariesFuture = widget.itineraryDao.getItinerariesWithExhibits();
     _favoritesFuture = widget.favoritesDao.getFavorites(sessionId: widget.sessionId);
@@ -51,10 +52,11 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _tabController.dispose(); // Clean up tab controller
     super.dispose();
   }
 
+  // Navigate to itinerary detail page
   Future<void> _navigateToItineraryDetail(ItineraryWithExhibits itinerary) async {
     await Navigator.push(
       context,
@@ -67,12 +69,13 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
         ),
       ),
     );
-    // Refresh favorites when coming back
+    // Refresh favorites when returning (they might have changed)
     setState(() {
       _loadData();
     });
   }
 
+  // Navigate to exhibit detail page
   Future<void> _navigateToExhibitDetail(int exhibitId) async {
     final exhibitDetails = await widget.visitorDao.getExhibitDetails(exhibitId);
     
@@ -88,7 +91,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
           ),
         ),
       );
-      // Refresh favorites when coming back
+      // Refresh favorites when returning
       setState(() {
         _loadData();
       });
@@ -153,10 +156,12 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
     );
   }
 
+  // Build the itineraries tab content
   Widget _buildItinerariesTab() {
     return FutureBuilder<List<ItineraryWithExhibits>>(
       future: _itinerariesFuture,
       builder: (context, snapshot) {
+        // Loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(
@@ -165,6 +170,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
           );
         }
 
+        // Error state
         if (snapshot.hasError) {
           return Center(
             child: Column(
@@ -183,6 +189,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
 
         final itineraries = snapshot.data!;
 
+        // Empty state - no itineraries available
         if (itineraries.isEmpty) {
           return Center(
             child: Column(
@@ -211,6 +218,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
           );
         }
 
+        // Success state - display list of itineraries
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: itineraries.length,
@@ -223,6 +231,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
     );
   }
 
+  // Build individual itinerary card
   Widget _buildItineraryCard(ItineraryWithExhibits itinerary) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -255,6 +264,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header row with icon, title, and arrow
                 Row(
                   children: [
                     Container(
@@ -300,6 +310,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                     ),
                   ],
                 ),
+                // List of included exhibits (shows first 3)
                 if (itinerary.exhibits.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Container(
@@ -346,6 +357,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                             ),
                           );
                         }).toList(),
+                        // Show count of additional exhibits if more than 3
                         if (itinerary.exhibits.length > 3)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
@@ -370,10 +382,12 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
     );
   }
 
+  // Build the favorites tab content
   Widget _buildFavoritesTab() {
     return FutureBuilder<List<ExhibitLite>>(
       future: _favoritesFuture,
       builder: (context, snapshot) {
+        // Loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(
@@ -382,6 +396,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
           );
         }
 
+        // Error state
         if (snapshot.hasError) {
           return Center(
             child: Column(
@@ -400,6 +415,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
 
         final favorites = snapshot.data!;
 
+        // Empty state - no favorites yet
         if (favorites.isEmpty) {
           return Center(
             child: Column(
@@ -429,6 +445,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
           );
         }
 
+        // Success state - display list of favorite exhibits
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: favorites.length,
@@ -441,6 +458,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
     );
   }
 
+  // Build individual favorite card
   Widget _buildFavoriteCard(ExhibitLite exhibit) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -458,6 +476,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
+                // Star icon indicating favorite status
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -471,6 +490,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                   ),
                 ),
                 const SizedBox(width: 16),
+                // Exhibit information
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,6 +514,7 @@ class _VisitorBrowsePageState extends State<VisitorBrowsePage>
                     ],
                   ),
                 ),
+                // Navigation arrow
                 Icon(
                   Icons.arrow_forward_ios,
                   color: Colors.purple[300],

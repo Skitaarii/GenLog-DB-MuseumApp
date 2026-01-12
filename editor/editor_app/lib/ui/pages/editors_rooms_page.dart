@@ -1,14 +1,17 @@
 // Veuillet Gaëtan
 // 2025
 // Description : Room page adding/modifying/deleting for editor
+// Administration interface for managing museum rooms and their exhibit associations
 
 import 'package:flutter/material.dart';
 import 'package:editor_app/data/room_dao.dart';
 import 'package:editor_app/data/room.dart';
 import 'package:intl/intl.dart';
 
+// Date formatter for consistent date display
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');
 
+// Helper function to format dates, returns '-' for null dates
 String formatDate(DateTime? date) {
   if (date == null) return '-';
   return _dateFormatter.format(date);
@@ -35,16 +38,18 @@ class _EditorsRoomsPageState extends State<EditorsRoomsPage> {
     _loadRooms();
   }
 
+  // Reload rooms from database
   void _loadRooms() {
     _roomsFuture = widget.roomDao.getRoomsWithExhibits();
   }
 
+  // Open dialog for adding a new room
 Future<void> _openAddRoomDialog() async {
   final name = TextEditingController();
 
-  // fetch exhibits for the dropdown / multi-select
+  // Fetch all available exhibits for the multi-select
   final availableExhibits = await widget.roomDao.getAllExhibits();
-  final selected = <int>{};
+  final selected = <int>{}; // Set to store selected exhibit IDs
 
   await showDialog(
     context: context,
@@ -62,6 +67,7 @@ Future<void> _openAddRoomDialog() async {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Dialog header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
@@ -74,6 +80,7 @@ Future<void> _openAddRoomDialog() async {
                 ),
               ),
               Divider(color: Colors.purple[700]),
+              // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16.0),
@@ -81,6 +88,7 @@ Future<void> _openAddRoomDialog() async {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Room name input
                       TextField(
                         controller: name,
                         style: const TextStyle(color: Colors.white),
@@ -114,7 +122,9 @@ Future<void> _openAddRoomDialog() async {
                       ),
                       const SizedBox(height: 12),
                       
+                      // Exhibits selection list
                       if (availableExhibits.isEmpty)
+                        // Empty state
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                           decoration: BoxDecoration(
@@ -132,6 +142,7 @@ Future<void> _openAddRoomDialog() async {
                           ),
                         )
                       else
+                        // Exhibits checklist
                         Container(
                           constraints: const BoxConstraints(maxHeight: 200),
                           decoration: BoxDecoration(
@@ -186,11 +197,13 @@ Future<void> _openAddRoomDialog() async {
                 ),
               ),
               Divider(color: Colors.purple[700]),
+              // Dialog buttons
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    // Cancel button
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.purple[700]!),
@@ -205,6 +218,7 @@ Future<void> _openAddRoomDialog() async {
                       ),
                     ),
                     const SizedBox(width: 12),
+                    // Create button
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -217,6 +231,7 @@ Future<void> _openAddRoomDialog() async {
                       ),
                       child: ElevatedButton(
                         onPressed: () async {
+                          // Validate input
                           if (name.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -227,6 +242,7 @@ Future<void> _openAddRoomDialog() async {
                             return;
                           }
 
+                          // Insert room and associated exhibits
                           final newRoomId = await widget.roomDao.insertRoom(name: name.text);
                           if (selected.isNotEmpty) {
                             await widget.roomDao.insertRoomExhibits(newRoomId, selected.toList());
@@ -261,11 +277,13 @@ Future<void> _openAddRoomDialog() async {
   );
 }
 
+  // Open dialog for editing an existing room
 Future<void> _openEditDialog(RoomWithExhibits room) async {
   final name = TextEditingController(text: room.name);
   
-  // fetch exhibits for the dropdown / multi-select
+  // Fetch all available exhibits for the multi-select
   final availableExhibits = await widget.roomDao.getAllExhibits();
+  // Initialize with currently assigned exhibits
   final selected = <int>{...room.exhibits.map((e) => e.exhibit_id)};
 
   await showDialog(
@@ -284,6 +302,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Dialog header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
@@ -296,6 +315,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                 ),
               ),
               Divider(color: Colors.purple[700]),
+              // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16.0),
@@ -303,6 +323,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Room name input
                       TextField(
                         controller: name,
                         style: const TextStyle(color: Colors.white),
@@ -336,7 +357,9 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                       ),
                       const SizedBox(height: 12),
                       
+                      // Exhibits selection list
                       if (availableExhibits.isEmpty)
+                        // Empty state
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                           decoration: BoxDecoration(
@@ -354,6 +377,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                           ),
                         )
                       else
+                        // Exhibits checklist
                         Container(
                           constraints: const BoxConstraints(maxHeight: 200),
                           decoration: BoxDecoration(
@@ -408,11 +432,13 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                 ),
               ),
               Divider(color: Colors.purple[700]),
+              // Dialog buttons
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    // Cancel button
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.purple[700]!),
@@ -427,6 +453,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                       ),
                     ),
                     const SizedBox(width: 12),
+                    // Save button
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -439,6 +466,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                       ),
                       child: ElevatedButton(
                         onPressed: () async {
+                          // Validate input
                           if (name.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -484,6 +512,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
   );
 }
 
+  // Confirm and delete a room
   Future<void> _deleteExhibit(RoomWithExhibits room) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -539,6 +568,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
       body: FutureBuilder<List<RoomWithExhibits>>(
         future: _roomsFuture,
         builder: (context, snapshot) {
+          // Loading state
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(
@@ -547,6 +577,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
             );
           }
 
+          // Error state
           if (snapshot.hasError) {
             return Center(
               child: Text(
@@ -563,7 +594,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ADD BUTTON
+                // ADD NEW ROOM BUTTON
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -602,7 +633,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                 ),
                 const SizedBox(height: 20),
 
-                // TABLE
+                // ROOMS TABLE
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey[900],
@@ -616,13 +647,13 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     columnWidths: const {
-                      0: FlexColumnWidth(2),
-                      1: FlexColumnWidth(3),
-                      2: FixedColumnWidth(80),
-                      3: FixedColumnWidth(80),
+                      0: FlexColumnWidth(2),    // Room Name
+                      1: FlexColumnWidth(3),    // Exhibits
+                      2: FixedColumnWidth(80),  // Edit
+                      3: FixedColumnWidth(80),  // Delete
                     },
                     children: [
-                      // Header row
+                      // Table header row
                       TableRow(
                         decoration: BoxDecoration(
                           color: Colors.purple[900],
@@ -676,14 +707,14 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                           ),
                         ],
                       ),
-                      // Data rows
+                      // Data rows for each room
                       ...rooms.map((r) {
                         return TableRow(
                           decoration: BoxDecoration(
                             color: Colors.grey[900],
                           ),
                           children: [
-                            // Name
+                            // Room name
                             Container(
                               padding: const EdgeInsets.all(12),
                               alignment: Alignment.centerLeft,
@@ -696,7 +727,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                                 ),
                               ),
                             ),
-                            // Exhibits
+                            // Associated exhibits
                             Container(
                               constraints: const BoxConstraints(
                                 minHeight: 60,
@@ -708,6 +739,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     if (r.exhibits.isEmpty)
+                                      // Empty room state
                                       Text(
                                         'No exhibits assigned',
                                         style: TextStyle(
@@ -716,6 +748,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                                         ),
                                       )
                                     else
+                                      // List of exhibits in room
                                       ...r.exhibits.map((ex) => Padding(
                                             padding: const EdgeInsets.only(bottom: 6),
                                             child: Row(
@@ -744,7 +777,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                                 ),
                               ),
                             ),
-                            // Edit
+                            // Edit button
                             Container(
                               height: 60,
                               alignment: Alignment.center,
@@ -753,7 +786,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                                 onPressed: () => _openEditDialog(r),
                               ),
                             ),
-                            // Delete
+                            // Delete button
                             Container(
                               height: 60,
                               alignment: Alignment.center,
@@ -770,7 +803,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                 ),
                 const SizedBox(height: 20),
 
-                // Statistiques
+                // STATISTICS CARD
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -781,6 +814,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // Total rooms count
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -801,6 +835,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                           ),
                         ],
                       ),
+                      // Total exhibits count across all rooms
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -821,6 +856,7 @@ Future<void> _openEditDialog(RoomWithExhibits room) async {
                           ),
                         ],
                       ),
+                      // Decorative icon
                       Icon(
                         Icons.room,
                         size: 40,

@@ -7,28 +7,37 @@ import 'package:editor_app/data/visitor_dao.dart';
 import 'package:editor_app/ui/pages/editors_home_page.dart';
 import 'package:editor_app/data/itinerary_dao.dart';
 
+// Main entry point of the Flutter application
 Future<void> main() async {
+  // Required Flutter bindings initialization before any operations
   WidgetsFlutterBinding.ensureInitialized();
 
+  // PostgreSQL database connection configuration
+  // Note: IP address varies by environment:
+  // - Emulator: '10.0.2.2' (localhost alias for Android emulator)
+  // - Physical device: Actual server address needed
   final connection = PostgreSQLConnection(
-    '10.0.2.2', //for emulation : '10.0.2.2' / for physical device : 'localhost'
+    'localhost', //for emulation : '10.0.2.2' / for physical device : 'localhost'
     5432,
     'museum_DB',
     username: 'admin',
     password: 'eaeaoh',
   );
 
+  // Establish connection to the database
   await connection.open();
 
+  // Initialize Data Access Objects (DAOs) for different entities
   final exhibitDao = ExhibitDao(connection);
   final roomDao = RoomDao(connection);
   final visitorDao = VisitorDao(connection);
   final itineraryDao = ItineraryDao(connection); 
 
-  //Session for the visitor
+  // Create a new visitor session for tracking
   final sessionId = await visitorDao.createNewSession();
   print('New session created: $sessionId');
 
+  // Build and run the application
   runApp(MyApp(
     exhibitDao: exhibitDao,
     roomDao: roomDao,

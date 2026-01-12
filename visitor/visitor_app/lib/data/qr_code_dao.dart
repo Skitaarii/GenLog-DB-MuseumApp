@@ -1,15 +1,17 @@
-// Benno WEber
+// Benno Weber
 // 2025
-// Data Access Object for QR Code entity
+// Data Access Object for QR Code management
 
 import 'package:postgres/postgres.dart';
 
+/// Handles database operations for QR codes linking exhibits to rooms
+/// QR codes are created when visitors first scan them in a specific room
 class QRCodeDao {
   final PostgreSQLConnection connection;
 
   QRCodeDao(this.connection);
 
-  /// Check if a QR code entry already exists for this exhibit and room
+  /// Checks if a QR code already exists for a specific exhibit-room combination
   Future<bool> qrCodeExists(int exhibitId, int roomId) async {
     final result = await connection.query(
       '''
@@ -25,14 +27,15 @@ class QRCodeDao {
     return result.isNotEmpty;
   }
 
-  /// Insert a new QR code entry (called when first scanned)
+  /// Creates a new QR code entry when first scanned by a visitor
+  /// Returns null if QR code already exists for that exhibit-room pair
   Future<int?> insertQRCode({
     required int exhibitId,
     required int roomId,
     String? qrImagePath,
   }) async {
     try {
-      // Check if already exists
+      // Prevent duplicate QR codes for same exhibit-room combination
       if (await qrCodeExists(exhibitId, roomId)) {
         print('QR code already exists for exhibit $exhibitId, room $roomId');
         return null;
@@ -60,7 +63,7 @@ class QRCodeDao {
     }
   }
 
-  /// Get all QR codes
+  /// Retrieves all QR codes with related exhibit and room information
   Future<List<Map<String, dynamic>>> getAllQRCodes() async {
     final result = await connection.query(
       '''
@@ -85,7 +88,7 @@ class QRCodeDao {
     }).toList();
   }
 
-  /// Get QR code by exhibit and room
+  /// Gets a specific QR code by exhibit and room identifiers
   Future<Map<String, dynamic>?> getQRCode(int exhibitId, int roomId) async {
     final result = await connection.query(
       '''
@@ -115,7 +118,7 @@ class QRCodeDao {
     };
   }
 
-  /// Delete a QR code entry
+  /// Deletes a QR code entry by its ID
   Future<bool> deleteQRCode(int qrId) async {
     try {
       await connection.execute(
@@ -130,7 +133,7 @@ class QRCodeDao {
     }
   }
 
-  /// Update QR code image path
+  /// Updates the image path for an existing QR code
   Future<bool> updateQRImagePath(int qrId, String imagePath) async {
     try {
       await connection.execute(

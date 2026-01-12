@@ -1,13 +1,13 @@
 // Keenan Prusse
 // 2025
 // Analytics Dashboard for curators
+// Interactive dashboard for museum analytics with multiple data views and export capabilities
 
 import 'package:flutter/material.dart';
 import 'package:analytic_app/data/analytics_dao.dart';
 import 'package:analytic_app/data/analytics.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-
 
 class AnalyticsDashboardPage extends StatefulWidget {
   final AnalyticsDao analyticsDao;
@@ -24,9 +24,9 @@ class AnalyticsDashboardPage extends StatefulWidget {
 class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
   DateTime? _startDate;
   DateTime? _endDate;
-  int _selectedTab = 0;
+  int _selectedTab = 0; // Active tab index
 
-  // Data
+  // Analytics data storage
   List<DwellTimeStats> _dwellStats = [];
   List<PathSegment> _popularPaths = [];
   List<EntryExitPoint> _entryExitPoints = [];
@@ -45,10 +45,12 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
     _loadData();
   }
 
+  // Load all analytics data for selected date range
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
     try {
+      // Fetch all analytics data concurrently
       final dwellStats = await widget.analyticsDao.getExhibitDwellStats(
         startDate: _startDate,
         endDate: _endDate,
@@ -79,6 +81,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
         endDate: _endDate,
       );
 
+      // Update state with fetched data
       setState(() {
         _dwellStats = dwellStats;
         _popularPaths = popularPaths;
@@ -94,6 +97,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
     }
   }
 
+  // Open date range picker dialog
   Future<void> _selectDateRange() async {
     final picked = await showDateRangePicker(
       context: context,
@@ -110,10 +114,11 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
         _startDate = picked.start;
         _endDate = picked.end;
       });
-      _loadData();
+      _loadData(); // Reload data for new date range
     }
   }
 
+  // Export analytics data to CSV file
   Future<void> _exportToCsv() async {
     try {
       final csv = await widget.analyticsDao.generateCsvExport(
@@ -121,13 +126,14 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
         endDate: _endDate,
       );
 
-      // Save to file
+      // Save CSV to app documents directory
       final directory = await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/analytics_export_${DateTime.now().millisecondsSinceEpoch}.csv');
       await file.writeAsString(csv);
 
       if (!mounted) return;
       
+      // Show success notification
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('CSV exported to: ${file.path}'),
@@ -159,6 +165,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
         ),
         backgroundColor: Colors.purple[700],
         foregroundColor: Colors.white,
+        // Action buttons in app bar
         actions: [
           IconButton(
             icon: const Icon(Icons.date_range),
@@ -178,14 +185,16 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
         ],
       ),
       body: _isLoading
-          ? const Center(
+          ? // Loading state
+          const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
               ),
             )
-          : Column(
+          : // Main content
+          Column(
               children: [
-                // Date range display
+                // Date range display header
                 Container(
                   padding: const EdgeInsets.all(16),
                   color: Colors.grey[900],
@@ -202,7 +211,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
                   ),
                 ),
 
-                // Tab bar
+                // Analytics category tabs
                 Container(
                   color: Colors.grey[850],
                   child: SingleChildScrollView(
@@ -219,7 +228,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
                   ),
                 ),
 
-                // Content
+                // Content area for selected tab
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
@@ -231,6 +240,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
     );
   }
 
+  // Build individual tab button
   Widget _buildTab(String label, int index) {
     final isSelected = _selectedTab == index;
     return GestureDetector(
@@ -257,6 +267,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
     );
   }
 
+  // Return content widget for active tab
   Widget _buildTabContent() {
     switch (_selectedTab) {
       case 0:
@@ -274,6 +285,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
     }
   }
 
+  // Overview tab with key metrics and top performers
   Widget _buildOverviewTab() {
     if (_dailyStats.isEmpty) {
       return const Center(
@@ -284,24 +296,26 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
       );
     }
 
+    // Calculate summary metrics from daily stats
     final totalSessions = _dailyStats.fold<int>(0, (sum, stat) => sum + stat.totalSessions);
-final totalScans = _dailyStats.fold<int>(0, (sum, stat) => sum + stat.totalScans);
+    final totalScans = _dailyStats.fold<int>(0, (sum, stat) => sum + stat.totalScans);
 
-int totalDurationSeconds = 0;
-int totalSessionsWithDuration = 0;
+    int totalDurationSeconds = 0;
+    int totalSessionsWithDuration = 0;
 
-for (final stat in _dailyStats) {
-  totalDurationSeconds += stat.averageVisitDuration.inSeconds * stat.totalSessions;
-  totalSessionsWithDuration += stat.totalSessions;
-}
+    for (final stat in _dailyStats) {
+      totalDurationSeconds += stat.averageVisitDuration.inSeconds * stat.totalSessions;
+      totalSessionsWithDuration += stat.totalSessions;
+    }
 
-final avgDuration = totalSessionsWithDuration > 0
-    ? Duration(seconds: totalDurationSeconds ~/ totalSessionsWithDuration)
-    : Duration.zero;
+    final avgDuration = totalSessionsWithDuration > 0
+        ? Duration(seconds: totalDurationSeconds ~/ totalSessionsWithDuration)
+        : Duration.zero;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Section header
         const Text(
           'Key Metrics',
           style: TextStyle(
@@ -312,7 +326,7 @@ final avgDuration = totalSessionsWithDuration > 0
         ),
         const SizedBox(height: 16),
 
-        // Metric cards
+        // Metric cards (2x2 grid)
         Row(
           children: [
             Expanded(
@@ -360,7 +374,7 @@ final avgDuration = totalSessionsWithDuration > 0
 
         const SizedBox(height: 32),
 
-        // Top performing exhibits
+        // Top performing exhibits section
         const Text(
           'Top Performing Exhibits',
           style: TextStyle(
@@ -371,6 +385,7 @@ final avgDuration = totalSessionsWithDuration > 0
         ),
         const SizedBox(height: 16),
 
+        // Display top 5 high-engagement exhibits
         ..._exhibitPerformance
             .where((e) => e.performanceCategory == 'high-engagement')
             .take(5)
@@ -379,6 +394,7 @@ final avgDuration = totalSessionsWithDuration > 0
     );
   }
 
+  // Metric card widget for key statistics
   Widget _buildMetricCard(String label, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -420,10 +436,12 @@ final avgDuration = totalSessionsWithDuration > 0
     );
   }
 
+  // Dwell time analysis tab
   Widget _buildDwellTimeTab() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Section header
         const Text(
           'Exhibit Dwell Times',
           style: TextStyle(
@@ -439,6 +457,7 @@ final avgDuration = totalSessionsWithDuration > 0
         ),
         const SizedBox(height: 24),
 
+        // List of dwell time statistics
         ..._dwellStats.map((stat) => Container(
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(16),
@@ -463,6 +482,7 @@ final avgDuration = totalSessionsWithDuration > 0
                           ),
                         ),
                       ),
+                      // Visit count badge
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
@@ -477,6 +497,7 @@ final avgDuration = totalSessionsWithDuration > 0
                     ],
                   ),
                   const SizedBox(height: 12),
+                  // Dwell time metrics
                   Row(
                     children: [
                       _buildStatItem(
@@ -505,11 +526,12 @@ final avgDuration = totalSessionsWithDuration > 0
     );
   }
 
+  // Visitor flow analysis tab
   Widget _buildVisitorFlowTab() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Entry/Exit Points
+        // Entry/Exit Points section
         const Text(
           'Entry & Exit Points',
           style: TextStyle(
@@ -536,6 +558,7 @@ final avgDuration = totalSessionsWithDuration > 0
                       style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
+                  // Entry/exit counts with icons
                   Row(
                     children: [
                       Icon(Icons.login, color: Colors.green[400], size: 20),
@@ -559,7 +582,7 @@ final avgDuration = totalSessionsWithDuration > 0
 
         const SizedBox(height: 32),
 
-        // Popular Paths
+        // Popular Paths section
         const Text(
           'Popular Visitor Paths',
           style: TextStyle(
@@ -570,6 +593,7 @@ final avgDuration = totalSessionsWithDuration > 0
         ),
         const SizedBox(height: 16),
 
+        // Top 10 most common room transitions
         ..._popularPaths.take(10).map((path) => Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
@@ -597,6 +621,7 @@ final avgDuration = totalSessionsWithDuration > 0
                       ],
                     ),
                   ),
+                  // Transition count badge
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
@@ -615,8 +640,9 @@ final avgDuration = totalSessionsWithDuration > 0
     );
   }
 
+  // Exhibit performance analysis tab
   Widget _buildPerformanceTab() {
-    // Group by category
+    // Categorize exhibits by performance
     final highEngagement = _exhibitPerformance
         .where((e) => e.performanceCategory == 'high-engagement')
         .toList();
@@ -630,6 +656,7 @@ final avgDuration = totalSessionsWithDuration > 0
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Section header
         const Text(
           'Exhibit Performance Analysis',
           style: TextStyle(
@@ -645,7 +672,7 @@ final avgDuration = totalSessionsWithDuration > 0
         ),
         const SizedBox(height: 24),
 
-        // High Engagement
+        // High Engagement category
         if (highEngagement.isNotEmpty) ...[
           _buildCategoryHeader('High Engagement', Colors.green, Icons.trending_up),
           const SizedBox(height: 12),
@@ -653,7 +680,7 @@ final avgDuration = totalSessionsWithDuration > 0
           const SizedBox(height: 24),
         ],
 
-        // Confusing (needs attention)
+        // Needs Attention category
         if (confusing.isNotEmpty) ...[
           _buildCategoryHeader('Needs Attention', Colors.orange, Icons.warning),
           const SizedBox(height: 12),
@@ -661,7 +688,7 @@ final avgDuration = totalSessionsWithDuration > 0
           const SizedBox(height: 24),
         ],
 
-        // Low Engagement
+        // Low Engagement category
         if (lowEngagement.isNotEmpty) ...[
           _buildCategoryHeader('Low Engagement', Colors.red, Icons.trending_down),
           const SizedBox(height: 12),
@@ -671,10 +698,12 @@ final avgDuration = totalSessionsWithDuration > 0
     );
   }
 
+  // Room popularity analysis tab
   Widget _buildRoomsTab() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Section header
         const Text(
           'Room Popularity',
           style: TextStyle(
@@ -685,6 +714,7 @@ final avgDuration = totalSessionsWithDuration > 0
         ),
         const SizedBox(height: 16),
 
+        // Room popularity list
         ..._roomPopularity.map((room) => Container(
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(16),
@@ -709,6 +739,7 @@ final avgDuration = totalSessionsWithDuration > 0
                           ),
                         ),
                       ),
+                      // Visit count badge
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
@@ -723,6 +754,7 @@ final avgDuration = totalSessionsWithDuration > 0
                     ],
                   ),
                   const SizedBox(height: 12),
+                  // Room metrics
                   Row(
                     children: [
                       _buildStatItem(
@@ -745,6 +777,7 @@ final avgDuration = totalSessionsWithDuration > 0
     );
   }
 
+  // Category header for performance tab
   Widget _buildCategoryHeader(String title, Color color, IconData icon) {
     return Row(
       children: [
@@ -762,6 +795,7 @@ final avgDuration = totalSessionsWithDuration > 0
     );
   }
 
+  // Exhibit performance card widget
   Widget _buildExhibitCard(ExhibitPerformance exhibit) {
     Color categoryColor;
     switch (exhibit.performanceCategory) {
@@ -801,6 +835,7 @@ final avgDuration = totalSessionsWithDuration > 0
                   ),
                 ),
               ),
+              // Performance category badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -816,6 +851,7 @@ final avgDuration = totalSessionsWithDuration > 0
             ],
           ),
           const SizedBox(height: 12),
+          // Exhibit metrics row
           Row(
             children: [
               _buildStatItem(
@@ -842,6 +878,7 @@ final avgDuration = totalSessionsWithDuration > 0
     );
   }
 
+  // Statistics item widget (icon + label + value)
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Row(
       children: [

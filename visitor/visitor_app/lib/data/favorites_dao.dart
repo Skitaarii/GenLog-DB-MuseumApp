@@ -1,6 +1,7 @@
 // Gaëtan Veuillet
 // 2025
 // Data Access Object for Favorites
+// Manages all database operations related to user favorite exhibits
 
 import 'package:postgres/postgres.dart';
 import 'package:visitor_app/data/exhibit.dart';
@@ -10,7 +11,8 @@ class FavoritesDao {
 
   FavoritesDao(this.connection);
 
-  // Add an exhibit to favorites
+  // Add an exhibit to favorites for a specific session
+  // Uses ON CONFLICT clause to prevent duplicate entries
   Future<bool> addFavorite({
     required int sessionId,
     required int exhibitId,
@@ -33,7 +35,7 @@ class FavoritesDao {
     }
   }
 
-  // Remove an exhibit from favorites
+  // Remove an exhibit from favorites for a specific session
   Future<bool> removeFavorite({
     required int sessionId,
     required int exhibitId,
@@ -55,7 +57,8 @@ class FavoritesDao {
     }
   }
 
-  // Check if an exhibit is a favorite for a session
+  // Check if an exhibit is marked as favorite for a given session
+  // Returns true if found, false otherwise
   Future<bool> isFavorite({
     required int sessionId,
     required int exhibitId,
@@ -77,7 +80,9 @@ class FavoritesDao {
     }
   }
 
-  // Get all favorite exhibits for a session (with details)
+  // Get all favorite exhibits for a specific session
+  // Returns list of ExhibitLite objects with id and title
+  // Ordered by most recently added (added_at DESC)
   Future<List<ExhibitLite>> getFavorites({
     required int sessionId,
   }) async {
@@ -104,17 +109,21 @@ class FavoritesDao {
     }
   }
 
-  // Toggle favorite status (add if not exists, remove if exists)
+  // Toggle favorite status for an exhibit
+  // If currently a favorite, removes it; if not, adds it
+  // Returns true if operation was successful
   Future<bool> toggleFavorite({
     required int sessionId,
     required int exhibitId,
   }) async {
     try {
+      // First check current favorite status
       final isFav = await isFavorite(
         sessionId: sessionId,
         exhibitId: exhibitId,
       );
 
+      // Toggle based on current status
       if (isFav) {
         return await removeFavorite(
           sessionId: sessionId,
@@ -132,7 +141,8 @@ class FavoritesDao {
     }
   }
 
-  // Get favorite count for a session
+  // Get the count of favorite exhibits for a session
+  // Useful for badges and summary displays
   Future<int> getFavoritesCount({
     required int sessionId,
   }) async {
@@ -153,7 +163,8 @@ class FavoritesDao {
     }
   }
 
-  // Clear all favorites for a session
+  // Clear all favorites for a specific session
+  // Useful for session cleanup or user preferences reset
   Future<bool> clearAllFavorites({
     required int sessionId,
   }) async {

@@ -1,6 +1,6 @@
 // Veuillet Gaëtan
 // 2025
-// Description : Editors home page to have access to editing Exhbits/Rooms/Itineraries
+// Editor's home page for accessing exhibit, room, and itinerary management
 
 import 'package:flutter/material.dart';
 import 'package:editor_app/ui/pages/editors_rooms_page.dart';
@@ -11,6 +11,7 @@ import 'package:editor_app/data/room_dao.dart';
 import 'package:editor_app/data/itinerary_dao.dart';
 import 'package:editor_app/ui/pages/editors_itinerary_page.dart';
 
+/// Main landing page for editors providing access to all management sections
 class EditorsHomePage extends StatelessWidget {
   final ExhibitDao exhibitDao;
   final RoomDao roomDao;
@@ -52,13 +53,7 @@ class EditorsHomePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Title
-            /*const Icon(
-              Icons.admin_panel_settings,
-              size: 80,
-              color: Colors.purple,
-            ),
-            */
+            // Header section
             const SizedBox(height: 20),
             const Text(
               'Editor Management',
@@ -78,7 +73,7 @@ class EditorsHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            //Actions button
+            // EXHIBITS management button
             Container(
               width: 300,
               decoration: BoxDecoration(
@@ -116,6 +111,7 @@ class EditorsHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
+            // ROOMS management button
             Container(
               width: 300,
               decoration: BoxDecoration(
@@ -153,6 +149,7 @@ class EditorsHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
+            // ITINERARIES management button
             Container(
               width: 300,
               decoration: BoxDecoration(
@@ -181,7 +178,7 @@ class EditorsHomePage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => EditorsItineraryPage(
-                        itineraryDao: itineraryDao, // ⚠️ VOUS DEVEZ PASSER itineraryDao ICI
+                        itineraryDao: itineraryDao,
                       ),
                     ),
                   );
@@ -190,7 +187,7 @@ class EditorsHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            // Informations
+            // Information panel
             Container(
               padding: const EdgeInsets.all(16),
               width: 300,

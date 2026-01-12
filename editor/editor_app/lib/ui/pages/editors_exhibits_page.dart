@@ -1,6 +1,7 @@
 // Veuillet Gaëtan
 // 2025
 // Description : Exhibit page adding/modifying/deleting for admin
+// Administration interface for managing museum exhibits (CRUD operations with images)
 
 import 'package:flutter/material.dart';
 import 'package:editor_app/data/exhibit_dao.dart';
@@ -11,9 +12,10 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';                          
 import 'dart:io';      
 
-
+// Date formatter for consistent date display
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');
 
+// Helper function to format dates, returns '-' for null dates
 String formatDate(DateTime? date) {
   if (date == null) return '-';
   return _dateFormatter.format(date);
@@ -41,10 +43,12 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
     _loadExhibits();
   }
 
+  // Reload exhibits from database
   void _loadExhibits() {
     _exhibitsFuture = widget.exhibitDao.getAllExhibits();
   }
 
+  // Pick multiple images from device gallery
   Future<List<ExhibitImage>> _pickImages() async {
     final List<XFile> pickedFiles = await _imagePicker.pickMultiImage();
     
@@ -62,6 +66,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
     return images;
   }
 
+  // Open dialog for adding a new exhibit
   Future<void> _openAddExhibitDialog() async {
     final titleController = TextEditingController();
     DateTime? startDate;
@@ -85,7 +90,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
           ),
           child: StatefulBuilder(
             builder: (context, setDialogState) {
-              return Padding(
+              return SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -102,7 +107,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                     Divider(color: Colors.purple[700]),
                     const SizedBox(height: 16),
                     
-                    // Champs de saisie
+                    // Input fields
                     TextField(
                       controller: titleController,
                       style: const TextStyle(color: Colors.white),
@@ -215,6 +220,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                               ),
                             ],
                           ),
+                          // Display selected images
                           if (selectedImages.isNotEmpty) ...[
                             const SizedBox(height: 12),
                             SizedBox(
@@ -228,6 +234,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                     margin: const EdgeInsets.only(right: 8),
                                     child: Stack(
                                       children: [
+                                        // Image preview
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(8),
                                           child: Image.memory(
@@ -237,6 +244,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                             fit: BoxFit.cover,
                                           ),
                                         ),
+                                        // Delete button
                                         Positioned(
                                           top: 4,
                                           right: 4,
@@ -272,7 +280,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                     ),
                     const SizedBox(height: 20),                    
 
-                    // Dates
+                    // Date selection section
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -282,6 +290,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                       ),
                       child: Column(
                         children: [
+                          // Start date picker
                           GestureDetector(
                             onTap: () async {
                               final picked = await showDatePicker(
@@ -325,6 +334,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                           ),
                           const SizedBox(height: 12),
                           
+                          // End date picker
                           GestureDetector(
                             onTap: () async {
                               final picked = await showDatePicker(
@@ -371,10 +381,11 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Boutons
+                    // Dialog buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        // Cancel button
                         Container(
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.purple[700]!),
@@ -389,6 +400,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                           ),
                         ),
                         const SizedBox(width: 12),
+                        // Create button
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -401,6 +413,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                           ),
                           child: ElevatedButton(
                             onPressed: () async {
+                              // Validate required fields
                               if (titleController.text.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -411,9 +424,11 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 return;
                               }
 
+                              // Get or create description IDs
                               final short_desc = await widget.exhibitDao.getOrCreateShortDescId(shortDescController.text);
                               final long_desc = await widget.exhibitDao.getOrCreateLongDescId(longDescController.text);
 
+                              // Insert exhibit record
                               final exhibitId = await widget.exhibitDao.insertExhibit(
                                   title: titleController.text,
                                   startDate: startDate,
@@ -422,13 +437,14 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                   longDescId: long_desc,
                                 );
 
-                                for (var image in selectedImages) {
-                                  await widget.exhibitDao.insertImage(
-                                    exhibitId: exhibitId,
-                                    imageData: image.imageData,
-                                    altText: image.altText,
-                                  );
-                                }
+                              // Insert associated images
+                              for (var image in selectedImages) {
+                                await widget.exhibitDao.insertImage(
+                                  exhibitId: exhibitId,
+                                  imageData: image.imageData,
+                                  altText: image.altText,
+                                );
+                              }
 
                               Navigator.pop(context);
                               setState(() {
@@ -460,6 +476,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
     );
   }
 
+  // Open dialog for editing an existing exhibit
   Future<void> _openEditDialog(Exhibit exhibit) async {
     final titleController = TextEditingController(text: exhibit.title);
     DateTime? startDate = exhibit.startDate;
@@ -468,6 +485,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
     String shortDescText = '';
     String longDescText = '';
 
+    // Fetch existing descriptions
     final shortResult = await widget.exhibitDao.connection.query(
       'SELECT en FROM short_desc WHERE id = @id',
       substitutionValues: {'id': exhibit.short_desc_id},
@@ -483,6 +501,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
     final shortDescController = TextEditingController(text: shortDescText);
     final longDescController = TextEditingController(text: longDescText);
 
+    // Load existing images and prepare for new ones
     List<ExhibitImage> existingImages = await widget.exhibitDao.getExhibitImages(exhibit.exhibit_id);
     List<ExhibitImage> newImages = [];
 
@@ -496,7 +515,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
           ),
           child: StatefulBuilder(
             builder: (context, setDialogState) {
-              return Padding(
+              return SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -517,6 +536,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Title field
                           TextField(
                             controller: titleController,
                             style: const TextStyle(color: Colors.white),
@@ -541,6 +561,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                           ),
                           const SizedBox(height: 16),
                           
+                          // Short description field
                           TextField(
                             controller: shortDescController,
                             style: const TextStyle(color: Colors.white),
@@ -565,6 +586,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                           ),
                           const SizedBox(height: 16),
                           
+                          // Long description field
                           TextField(
                             controller: longDescController,
                             style: const TextStyle(color: Colors.white),
@@ -589,7 +611,8 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                             maxLines: 3,
                           ),
                           const SizedBox(height: 20),
-                                                    Container(
+                          // Image management section
+                          Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.grey[800],
@@ -611,6 +634,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                       ),
                                     ),
                                     const Spacer(),
+                                    // Add new images button
                                     ElevatedButton.icon(
                                       onPressed: () async {
                                         final images = await _pickImages();
@@ -627,6 +651,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                     ),
                                   ],
                                 ),
+                                // Display all images (existing + new)
                                 if (existingImages.isNotEmpty || newImages.isNotEmpty) ...[
                                   const SizedBox(height: 12),
                                   SizedBox(
@@ -634,7 +659,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                     child: ListView(
                                       scrollDirection: Axis.horizontal,
                                       children: [
-                                        // ← EXISTING IMAGES (from database)
+                                        // Existing images (from database)
                                         ...existingImages.asMap().entries.map((entry) {
                                           final index = entry.key;
                                           final img = entry.value;
@@ -683,7 +708,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                             ),
                                           );
                                         }),
-                                        // ← NEW IMAGES (not yet saved to database)
+                                        // New images (not yet saved to database)
                                         ...newImages.asMap().entries.map((entry) {
                                           final index = entry.key;
                                           final img = entry.value;
@@ -758,7 +783,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Dates
+                          // Date selection section
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
@@ -768,6 +793,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                             ),
                             child: Column(
                               children: [
+                                // Start date picker
                                 GestureDetector(
                                   onTap: () async {
                                     final picked = await showDatePicker(
@@ -811,6 +837,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 ),
                                 const SizedBox(height: 12),
                                 
+                                // End date picker
                                 GestureDetector(
                                   onTap: () async {
                                     final picked = await showDatePicker(
@@ -860,10 +887,11 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Boutons
+                    // Dialog buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        // Cancel button
                         Container(
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.purple[700]!),
@@ -878,6 +906,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                           ),
                         ),
                         const SizedBox(width: 12),
+                        // Save button
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -890,6 +919,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                           ),
                           child: ElevatedButton(
                             onPressed: () async {
+                              // Update exhibit information
                               await widget.exhibitDao.update(
                                 exhibitId: exhibit.exhibit_id,
                                 title: titleController.text,
@@ -898,17 +928,18 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 shortDesc: shortDescController.text,
                                 longDesc: longDescController.text,
                               );
-                                for (var image in newImages) {
-                                  await widget.exhibitDao.insertImage(
-                                    exhibitId: exhibit.exhibit_id,
-                                    imageData: image.imageData,
-                                    altText: image.altText,
-                                  );
-                                }
+                              // Insert new images
+                              for (var image in newImages) {
+                                await widget.exhibitDao.insertImage(
+                                  exhibitId: exhibit.exhibit_id,
+                                  imageData: image.imageData,
+                                  altText: image.altText,
+                                );
+                              }
 
-                                Navigator.pop(context);
-                                setState(() => _loadExhibits());
-                              },
+                              Navigator.pop(context);
+                              setState(() => _loadExhibits());
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
@@ -934,6 +965,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
     );
   }
 
+  // Confirm and delete an exhibit
   Future<void> _deleteExhibit(Exhibit exhibit) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -989,6 +1021,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
       body: FutureBuilder<List<Exhibit>>(
         future: _exhibitsFuture,
         builder: (context, snapshot) {
+          // Loading state
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(
@@ -997,6 +1030,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
             );
           }
 
+          // Error state
           if (snapshot.hasError) {
             return Center(
               child: Text(
@@ -1013,7 +1047,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ADD BUTTON
+                // ADD NEW EXHIBIT BUTTON
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -1052,7 +1086,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // TABLE
+                // EXHIBITS TABLE
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey[900],
@@ -1066,15 +1100,14 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     columnWidths: const {
-                      0: FixedColumnWidth(60),
-                      1: FlexColumnWidth(3),
-                      2: FixedColumnWidth(80),
-                      3: FixedColumnWidth(80),
-                      4: FixedColumnWidth(80),
+                      0: FixedColumnWidth(60),  // ID
+                      1: FlexColumnWidth(3),    // Title
+                      2: FixedColumnWidth(80),  // QR
+                      3: FixedColumnWidth(80),  // Edit
+                      4: FixedColumnWidth(80),  // Delete
                     },
                     children: [
-                      // Header row
-                      
+                      // Table header row
                       TableRow(
                         decoration: BoxDecoration(
                           color: Colors.purple[900],
@@ -1119,15 +1152,14 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                         ],
                       ),
 
-                      
-                      // Data rows
+                      // Data rows for each exhibit
                       ...exhibits.map((e) {
                         return TableRow(
                           decoration: BoxDecoration(
                             color: Colors.grey[900],
                           ),
                           children: [
-                            // ID
+                            // Exhibit ID
                             Container(
                               padding: const EdgeInsets.all(12),
                               alignment: Alignment.centerLeft,
@@ -1139,7 +1171,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 ),
                               ),
                             ),
-                            // Title
+                            // Exhibit Title
                             Container(
                               padding: const EdgeInsets.all(12),
                               alignment: Alignment.centerLeft,
@@ -1155,6 +1187,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
+                                  // Display end date if available
                                   if (e.finalDate != null) ...[
                                     const SizedBox(height: 4),
                                     Text(
@@ -1168,7 +1201,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 ],
                               ),
                             ),
-                            // QR Code Download
+                            // QR Code Download Button
                             Container(
                               height: 60,
                               alignment: Alignment.center,
@@ -1177,10 +1210,9 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 tooltip: 'Download QR Code',
                                 onPressed: () async {
                                   try {
-                                    // Directly download the QR code for this exhibit
+                                    // Download QR code for this exhibit
                                     final success = await QRCodeHelper.downloadQRCode(
                                       exhibit_id: e.exhibit_id,
-                                    // roomId not needed anymore
                                       exhibitTitle: e.title,
                                     );
 
@@ -1201,11 +1233,10 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                     );
                                   }
                                 }
-
                               ),
                             ),
 
-                            // Edit
+                            // Edit Button
                             Container(
                               height: 60,
                               alignment: Alignment.center,
@@ -1214,7 +1245,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 onPressed: () => _openEditDialog(e),
                               ),
                             ),
-                            // Delete
+                            // Delete Button
                             Container(
                               height: 60,
                               alignment: Alignment.center,
@@ -1231,7 +1262,7 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Stats
+                // STATISTICS CARD
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(

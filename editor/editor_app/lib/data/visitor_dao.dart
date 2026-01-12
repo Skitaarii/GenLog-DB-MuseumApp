@@ -1,18 +1,21 @@
 // Gaëtan Veuillet
 // 2025
-
+// Visitor Data Access Object - handles visitor-specific operations
 
 import 'package:postgres/postgres.dart';
 import 'package:editor_app/data/visitor.dart';
 
+/// DAO for visitor-facing operations including exhibit viewing, feedback, and QR scanning
 class VisitorDao {
   final PostgreSQLConnection connection;
 
   VisitorDao(this.connection);
 
-  //Get exhibit detail by its id
+  /// Retrieves complete exhibit details including descriptions, themes, era, and related exhibits
+  /// TODO: Implement proper related exhibits logic based on era and theme similarity
   Future<ExhibitDetails?> getExhibitDetails(int exhibitId) async {
     try {
+      // Fetch basic exhibit information
       final exhibitResult = await connection.query('''
         SELECT 
           e.exhibit_id, 
@@ -36,7 +39,7 @@ class VisitorDao {
 
       final row = exhibitResult.first;
 
-      //Get the era
+      // Get historical era information
       String? eraName;
       final eraResult = await connection.query('''
         SELECT era.era_name_EN
@@ -51,7 +54,7 @@ class VisitorDao {
         eraName = eraResult.first[0] as String;
       }
 
-      //Get the themes
+      // Get thematic categories
       final themesResult = await connection.query('''
         SELECT thm.thm_name_EN
         FROM Tags t
@@ -64,14 +67,14 @@ class VisitorDao {
           .map((row) => row[0] as String)
           .toList();
 
-      //Get linked exhibits 
-      //TODO : MADE IT FORM SIMILAR ERA AND THEME, WE NEED TO SEE WHAT ELSE COULD BE USE
+      // Get related exhibits based on shared themes or era
+      // TODO: Enhance related exhibits algorithm with more criteria
       final relatedResult = await connection.query('''
         SELECT DISTINCT e2.exhibit_id, e2.title
         FROM Exhibits e2
         WHERE e2.exhibit_id != @exhibitId
         AND (
-          -- Mêmes thèmes
+          -- Same themes
           EXISTS (
             SELECT 1 FROM Tags t2
             JOIN TagTheme tt2 ON t2.tag_id = tt2.tag_id
@@ -84,7 +87,7 @@ class VisitorDao {
             )
           )
           OR
-          -- Même ère
+          -- Same era
           EXISTS (
             SELECT 1 FROM Tags t2
             JOIN TagEra te2 ON t2.tag_id = te2.tag_id
@@ -125,61 +128,62 @@ class VisitorDao {
     }
   }
 
-//Feedback 
-Future<bool> submitFeedback({
-  required int exhibitId,
-  required int sessionId,
-  required String comment,
-  required int rating,
-}) async {
-  try {
-    //Verify if the session already exist
-    final sessionCheck = await connection.query(
-      'SELECT session_id FROM Session WHERE session_id = @sessionId',
-      substitutionValues: {'sessionId': sessionId},
-    );
-    
-    if (sessionCheck.isEmpty) {
-      print('Session $sessionId does not exist, creating it...');
-      //Create the session
-      await connection.execute(
-        'INSERT INTO Session (session_id) VALUES (@sessionId)',
+  /// Submits visitor feedback for an exhibit
+  /// Creates a session if it doesn't exist before submitting feedback
+  Future<bool> submitFeedback({
+    required int exhibitId,
+    required int sessionId,
+    required String comment,
+    required int rating,
+  }) async {
+    try {
+      // Verify if session exists
+      final sessionCheck = await connection.query(
+        'SELECT session_id FROM Session WHERE session_id = @sessionId',
         substitutionValues: {'sessionId': sessionId},
       );
+      
+      // Create session if it doesn't exist
+      if (sessionCheck.isEmpty) {
+        print('Session $sessionId does not exist, creating it...');
+        await connection.execute(
+          'INSERT INTO Session (session_id) VALUES (@sessionId)',
+          substitutionValues: {'sessionId': sessionId},
+        );
+      }
+      
+      // Submit feedback
+      await connection.execute('''
+        INSERT INTO Feedback (
+          exhibit_id, 
+          session_id, 
+          comment, 
+          rating, 
+          made_at
+        ) VALUES (
+          @exhibitId, 
+          @sessionId, 
+          @comment, 
+          @rating, 
+          @madeAt
+        )
+      ''', substitutionValues: {
+        'exhibitId': exhibitId,
+        'sessionId': sessionId,
+        'comment': comment,
+        'rating': rating,
+        'madeAt': DateTime.now(),
+      });
+      
+      print('Feedback submitted successfully for exhibit $exhibitId, session $sessionId');
+      return true;
+    } catch (e) {
+      print('Error submitting feedback: $e');
+      return false;
     }
-    
-    //Once session made -> make the feedback
-    await connection.execute('''
-      INSERT INTO Feedback (
-        exhibit_id, 
-        session_id, 
-        comment, 
-        rating, 
-        made_at
-      ) VALUES (
-        @exhibitId, 
-        @sessionId, 
-        @comment, 
-        @rating, 
-        @madeAt
-      )
-    ''', substitutionValues: {
-      'exhibitId': exhibitId,
-      'sessionId': sessionId,
-      'comment': comment,
-      'rating': rating,
-      'madeAt': DateTime.now(),
-    });
-    
-    print('Feedback submitted successfully for exhibit $exhibitId, session $sessionId');
-    return true;
-  } catch (e) {
-    print('Error submitting feedback: $e');
-    return false;
   }
-}
 
-  //Qrcode
+  /// Records a QR code scan for tracking visitor movement
   Future<bool> recordQRScan({
     required int sessionId,
     required int roomId,
@@ -212,38 +216,40 @@ Future<bool> submitFeedback({
     }
   }
 
-  //Create a new session globally
-
-Future<int> createNewSession() async {
-  try {
-    final result = await connection.query('''
-      INSERT INTO Session DEFAULT VALUES 
-      RETURNING session_id
-    ''');
-    
-    final sessionId = result.first[0] as int;
-    print('New session created in database: $sessionId');
-    return sessionId;
-  } catch (e) {
-    print('Error creating session: $e');
-    //Only for debug, if it can't create a session, we just try to log to an existant one 
+  /// Creates a new visitor session and returns its ID
+  /// Falls back to existing session or default ID if creation fails
+  Future<int> createNewSession() async {
     try {
-      final result = await connection.query(
-        'SELECT session_id FROM Session LIMIT 1'
-      );
-      if (result.isNotEmpty) {
-        final existingSessionId = result.first[0] as int;
-        print('Using existing session: $existingSessionId');
-        return existingSessionId;
+      final result = await connection.query('''
+        INSERT INTO Session DEFAULT VALUES 
+        RETURNING session_id
+      ''');
+      
+      final sessionId = result.first[0] as int;
+      print('New session created in database: $sessionId');
+      return sessionId;
+    } catch (e) {
+      print('Error creating session: $e');
+      
+      // Fallback: try to use an existing session
+      try {
+        final result = await connection.query(
+          'SELECT session_id FROM Session LIMIT 1'
+        );
+        if (result.isNotEmpty) {
+          final existingSessionId = result.first[0] as int;
+          print('Using existing session: $existingSessionId');
+          return existingSessionId;
+        }
+      } catch (e2) {
+        print('Error fetching existing session: $e2');
       }
-    } catch (e2) {
-      print('Error fetching existing session: $e2');
+      
+      return 1; // Ultimate fallback to ID 1
     }
-    return 1; // Fallback to id 1
   }
-}
 
-  //Get the historic of scan session
+  /// Gets scan history for a specific visitor session
   Future<List<QRScan>> getSessionScans(int sessionId) async {
     try {
       final result = await connection.query('''
@@ -267,39 +273,41 @@ Future<int> createNewSession() async {
     }
   }
 
-Future<double> getExhibitAverageRating(int exhibitId) async {
-  try {
-    final result = await connection.query('''
-      SELECT AVG(rating::float) as avg_rating
-      FROM Feedback
-      WHERE exhibit_id = @exhibitId
-    ''', substitutionValues: {'exhibitId': exhibitId});
+  /// Calculates average rating for an exhibit
+  /// Handles various database return types for compatibility
+  Future<double> getExhibitAverageRating(int exhibitId) async {
+    try {
+      final result = await connection.query('''
+        SELECT AVG(rating::float) as avg_rating
+        FROM Feedback
+        WHERE exhibit_id = @exhibitId
+      ''', substitutionValues: {'exhibitId': exhibitId});
 
-    if (result.isEmpty || result.first[0] == null) {
+      if (result.isEmpty || result.first[0] == null) {
+        return 0.0;
+      }
+      
+      final avgValue = result.first[0];
+      
+      // Handle different database return types
+      if (avgValue is double) {
+        return avgValue;
+      } else if (avgValue is int) {
+        return avgValue.toDouble();
+      } else if (avgValue is String) {
+        return double.tryParse(avgValue) ?? 0.0;
+      } else if (avgValue is num) {
+        return avgValue.toDouble();
+      }
+      
+      return 0.0;
+    } catch (e) {
+      print('Error fetching average rating: $e');
       return 0.0;
     }
-    
-    final avgValue = result.first[0];
-    
-    //Be sure that the type is double (had some problem with int)
-    if (avgValue is double) {
-      return avgValue;
-    } else if (avgValue is int) {
-      return avgValue.toDouble();
-    } else if (avgValue is String) {
-      return double.tryParse(avgValue) ?? 0.0;
-    } else if (avgValue is num) {
-      return avgValue.toDouble();
-    }
-    
-    return 0.0;
-  } catch (e) {
-    print('Error fetching average rating: $e');
-    return 0.0;
   }
-}
 
-  //Get all the feedback to show on the exhibit page
+  /// Retrieves all feedback comments for an exhibit
   Future<List<ExhibitFeedback>> getExhibitFeedbacks(int exhibitId) async {
     try {
       final result = await connection.query('''

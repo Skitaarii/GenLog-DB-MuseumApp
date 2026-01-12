@@ -1,6 +1,6 @@
 // Veuillet Gaëtan
 // 2025
-// Description : Itinerary page adding/modifying/deleting for editor
+// Itinerary management page for editors - add, modify, delete itineraries
 
 import 'package:flutter/material.dart';
 import 'package:editor_app/data/itinerary_dao.dart';
@@ -31,10 +31,11 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
     _itinerariesFuture = widget.itineraryDao.getItinerariesWithExhibits();
   }
 
+  /// Opens dialog to create a new itinerary with title and exhibit selection
   Future<void> _openAddItineraryDialog() async {
     final titleController = TextEditingController();
 
-    // Fetch exhibits for the dropdown / multi-select
+    // Fetch all available exhibits for selection
     final availableExhibits = await widget.itineraryDao.getAllExhibits();
     final selected = <int>{};
 
@@ -54,6 +55,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Dialog header
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
@@ -66,6 +68,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                   ),
                 ),
                 Divider(color: Colors.purple[700]),
+                // Dialog content
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16.0),
@@ -73,6 +76,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Title input
                         TextField(
                           controller: titleController,
                           style: const TextStyle(color: Colors.white),
@@ -96,6 +100,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
+                        // Exhibit selection header
                         Text(
                           'Select exhibits for this itinerary:',
                           style: TextStyle(
@@ -106,6 +111,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                         ),
                         const SizedBox(height: 12),
                         
+                        // Exhibit list (empty state)
                         if (availableExhibits.isEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -123,6 +129,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                               ),
                             ),
                           )
+                        // Exhibit list (with checkboxes)
                         else
                           Container(
                             constraints: const BoxConstraints(maxHeight: 200),
@@ -177,12 +184,14 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                     ),
                   ),
                 ),
+                // Dialog buttons
                 Divider(color: Colors.purple[700]),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      // Cancel button
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.purple[700]!),
@@ -197,6 +206,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
+                      // Create button
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -219,6 +229,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                               return;
                             }
 
+                            // Create itinerary and associate exhibits
                             final newItineraryId = await widget.itineraryDao.createItinerary(
                               title: titleController.text,
                             );
@@ -259,10 +270,11 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
     );
   }
 
+  /// Opens dialog to edit an existing itinerary
   Future<void> _openEditDialog(ItineraryWithExhibits itinerary) async {
     final titleController = TextEditingController(text: itinerary.title);
     
-    // Fetch exhibits for the dropdown / multi-select
+    // Fetch all exhibits and pre-select current ones
     final availableExhibits = await widget.itineraryDao.getAllExhibits();
     final selected = <int>{...itinerary.exhibits.map((e) => e.exhibit_id)};
 
@@ -282,6 +294,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Dialog header
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
@@ -294,6 +307,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                   ),
                 ),
                 Divider(color: Colors.purple[700]),
+                // Dialog content (same structure as add dialog)
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16.0),
@@ -405,12 +419,14 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                     ),
                   ),
                 ),
+                // Dialog buttons
                 Divider(color: Colors.purple[700]),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      // Cancel button
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.purple[700]!),
@@ -425,6 +441,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
+                      // Save button
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -447,13 +464,12 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                               return;
                             }
 
-                            // Update title
+                            // Update itinerary title and exhibits
                             await widget.itineraryDao.updateItinerary(
                               itinerary.itinerary_id,
                               title: titleController.text,
                             );
                             
-                            // Update exhibits list
                             await widget.itineraryDao.updateItineraryExhibits(
                               itinerary.itinerary_id,
                               selected.toList(),
@@ -488,6 +504,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
     );
   }
 
+  /// Confirms and deletes an itinerary
   Future<void> _deleteItinerary(ItineraryWithExhibits itinerary) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -543,6 +560,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
       body: FutureBuilder<List<ItineraryWithExhibits>>(
         future: _itinerariesFuture,
         builder: (context, snapshot) {
+          // Loading state
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(
@@ -551,6 +569,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
             );
           }
 
+          // Error state
           if (snapshot.hasError) {
             return Center(
               child: Text(
@@ -567,7 +586,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ADD BUTTON
+                // ADD NEW ITINERARY BUTTON
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -606,7 +625,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // TABLE
+                // ITINERARIES TABLE
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey[900],
@@ -626,7 +645,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                       3: FixedColumnWidth(80),
                     },
                     children: [
-                      // Header row
+                      // TABLE HEADER
                       TableRow(
                         decoration: BoxDecoration(
                           color: Colors.purple[900],
@@ -680,14 +699,14 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                           ),
                         ],
                       ),
-                      // Data rows
+                      // TABLE DATA ROWS
                       ...itineraries.map((itin) {
                         return TableRow(
                           decoration: BoxDecoration(
                             color: Colors.grey[900],
                           ),
                           children: [
-                            // Title
+                            // Title column
                             Container(
                               padding: const EdgeInsets.all(12),
                               alignment: Alignment.centerLeft,
@@ -713,7 +732,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                                 ],
                               ),
                             ),
-                            // Exhibits
+                            // Exhibits column
                             Container(
                               constraints: const BoxConstraints(
                                 minHeight: 60,
@@ -761,7 +780,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                                 ),
                               ),
                             ),
-                            // Edit
+                            // Edit button column
                             Container(
                               height: 60,
                               alignment: Alignment.center,
@@ -770,7 +789,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                                 onPressed: () => _openEditDialog(itin),
                               ),
                             ),
-                            // Delete
+                            // Delete button column
                             Container(
                               height: 60,
                               alignment: Alignment.center,
@@ -787,7 +806,7 @@ class _EditorsItineraryPageState extends State<EditorsItineraryPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Stats
+                // STATISTICS PANEL
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(

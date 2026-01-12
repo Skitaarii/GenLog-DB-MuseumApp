@@ -4,10 +4,15 @@ import 'package:postgres/postgres.dart';
 import 'package:analytic_app/ui/pages/analytics_dashboard_page.dart';
 import 'package:analytic_app/data/analytics_dao.dart';
 
-
+// Main entry point of the Flutter application
 Future<void> main() async {
+  // Required Flutter bindings initialization before any operations
   WidgetsFlutterBinding.ensureInitialized();
 
+  // PostgreSQL database connection configuration
+  // Note: IP address varies by environment:
+  // - Emulator: '10.0.2.2' (localhost alias for Android emulator)
+  // - Physical device: Actual server address needed
   final connection = PostgreSQLConnection(
     '10.0.2.2', //for emulation : '10.0.2.2' / for physical device : 'localhost'
     5432,
@@ -15,6 +20,8 @@ Future<void> main() async {
     username: 'admin',
     password: 'eaeaoh',
   );
+
+  // Establish connection to the database
 
   await connection.open();
 
@@ -42,17 +49,7 @@ class MyApp extends StatelessWidget {
       //For analytic page :
       home: AnalyticsDashboardPage(
         analyticsDao: analyticsDao,
-      ),
-      /*home: AdminPage(
-        adminDao: adminDao,
-        exhibitDao: exhibitDao,
-        roomDao: roomDao,
-        visitorDao: visitorDao,
-        analyticsDao: analyticsDao,
-        sessionId: sessionId,
-      )
-      */
-      
+      ),      
     );
   }
 }

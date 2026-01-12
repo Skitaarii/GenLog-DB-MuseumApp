@@ -1,6 +1,7 @@
 // Gaëtan Veuillet
 // 2025
 // Data Access Object for Itinerary (Visitor - Read Only)
+// Handles all read operations for itineraries in the visitor application
 
 import 'package:postgres/postgres.dart';
 import 'package:visitor_app/data/itinerary.dart';
@@ -12,7 +13,8 @@ class ItineraryDao {
 
   ItineraryDao(this.connection);
 
-  // Get all itineraries (basic info only)
+  // Get all itineraries (basic info only - without exhibits)
+  // Used for simple list displays where exhibit details are not required
   Future<List<Itinerary>> getAllItineraries() async {
     try {
       final result = await connection.query(
@@ -32,56 +34,61 @@ class ItineraryDao {
   }
 
   // Get all itineraries with their associated exhibits
-Future<List<ItineraryWithExhibits>> getItinerariesWithExhibits() async {
-  try {
-    final langColumn = LanguageManager().dbColumnName; // FR / EN / IT / DE
+  // Returns complete itinerary data including all contained exhibits
+  Future<List<ItineraryWithExhibits>> getItinerariesWithExhibits() async {
+    try {
+      final langColumn = LanguageManager().dbColumnName; // FR / EN / IT / DE
 
-    final result = await connection.query('''
-      SELECT
-        i.itinerary_id,
-        i.title_$langColumn,
-        e.exhibit_id,
-        e.title
-      FROM itineraries i
-      LEFT JOIN itinerary_exhibit ie ON ie.itinerary_id = i.itinerary_id
-      LEFT JOIN exhibits e ON e.exhibit_id = ie.exhibit_id
-      ORDER BY i.itinerary_id, ie.exhibit_order
-    ''');
+      // Complex query joining itineraries with exhibits through junction table
+      final result = await connection.query('''
+        SELECT
+          i.itinerary_id,
+          i.title_$langColumn,          -- Language-specific title
+          e.exhibit_id,
+          e.title                        -- Exhibit title (language independent)
+        FROM itineraries i
+        LEFT JOIN itinerary_exhibit ie ON ie.itinerary_id = i.itinerary_id
+        LEFT JOIN exhibits e ON e.exhibit_id = ie.exhibit_id
+        ORDER BY i.itinerary_id, ie.exhibit_order  -- Maintain exhibit order
+      ''');
 
-    final Map<int, ItineraryWithExhibits> itineraries = {};
+      // Map to group exhibits by itinerary
+      final Map<int, ItineraryWithExhibits> itineraries = {};
 
-    for (final row in result) {
-      final itineraryId = row[0] as int;
-      final itineraryTitle = row[1] as String;
+      for (final row in result) {
+        final itineraryId = row[0] as int;
+        final itineraryTitle = row[1] as String;
 
-      itineraries.putIfAbsent(
-        itineraryId,
-        () => ItineraryWithExhibits(
-          itinerary_id: itineraryId,
-          title: itineraryTitle,
-          exhibits: [],
-        ),
-      );
-
-      if (row[2] != null) {
-        itineraries[itineraryId]!.exhibits.add(
-          ExhibitLite(
-            exhibit_id: row[2] as int,
-            title: row[3] as String,
+        // Create itinerary entry if it doesn't exist
+        itineraries.putIfAbsent(
+          itineraryId,
+          () => ItineraryWithExhibits(
+            itinerary_id: itineraryId,
+            title: itineraryTitle,
+            exhibits: [],
           ),
         );
+
+        // Add exhibit to itinerary if present (some itineraries may be empty)
+        if (row[2] != null) {
+          itineraries[itineraryId]!.exhibits.add(
+            ExhibitLite(
+              exhibit_id: row[2] as int,
+              title: row[3] as String,
+            ),
+          );
+        }
       }
+
+      return itineraries.values.toList();
+    } catch (e) {
+      print('Error fetching itineraries with exhibits: $e');
+      return [];
     }
-
-    return itineraries.values.toList();
-  } catch (e) {
-    print('Error fetching itineraries with exhibits: $e');
-    return [];
   }
-}
 
-
-  // Get a specific itinerary with its exhibits
+  // Get a specific itinerary with its exhibits by ID
+  // Used when navigating to a specific itinerary detail page
   Future<ItineraryWithExhibits?> getItineraryById(int itineraryId) async {
     try {
       final result = await connection.query('''
@@ -90,11 +97,12 @@ Future<List<ItineraryWithExhibits>> getItinerariesWithExhibits() async {
         LEFT JOIN itinerary_exhibit ie ON ie.itinerary_id = i.itinerary_id
         LEFT JOIN exhibits e ON e.exhibit_id = ie.exhibit_id
         WHERE i.itinerary_id = @itineraryId
-        ORDER BY ie.exhibit_order
+        ORDER BY ie.exhibit_order  -- Maintain the intended exhibit order
       ''', substitutionValues: {'itineraryId': itineraryId});
 
-      if (result.isEmpty) return null;
+      if (result.isEmpty) return null; // Itinerary not found
 
+      // First row contains itinerary info
       final firstRow = result.first;
       final itinerary = ItineraryWithExhibits(
         itinerary_id: firstRow[0] as int,
@@ -102,8 +110,9 @@ Future<List<ItineraryWithExhibits>> getItinerariesWithExhibits() async {
         exhibits: [],
       );
 
+      // Add all exhibits from remaining rows
       for (final row in result) {
-        if (row[2] != null) {
+        if (row[2] != null) { // Check if exhibit exists (LEFT JOIN may return null)
           itinerary.exhibits.add(
             ExhibitLite(
               exhibit_id: row[2] as int,
@@ -120,7 +129,8 @@ Future<List<ItineraryWithExhibits>> getItinerariesWithExhibits() async {
     }
   }
 
-  // Get number of exhibits in an itinerary
+  // Get number of exhibits in a specific itinerary
+  // Used for summary displays and statistics
   Future<int> getExhibitCount(int itineraryId) async {
     try {
       final result = await connection.query('''

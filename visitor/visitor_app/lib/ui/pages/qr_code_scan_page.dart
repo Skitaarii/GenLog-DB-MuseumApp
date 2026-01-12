@@ -1,6 +1,7 @@
-// Veuillet Gaëtan
+// Veuillet Gaëtan et Weber Benno
 // 2025
 // Description : QR code scan page with real camera scanning
+// Main scanning interface for QR code detection and manual exhibit ID input
 
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -31,13 +32,14 @@ class QRCodeScanPage extends StatefulWidget {
 }
 
 class _QRCodeScanPageState extends State<QRCodeScanPage> {
-  late MobileScannerController _scannerController;
-  bool _isProcessing = false;
-  bool _isLoading = false;
+  late MobileScannerController _scannerController; // Camera controller for QR scanning
+  bool _isProcessing = false; // Prevents multiple QR code processing at once
+  bool _isLoading = false; // Loading state during data processing
 
   @override
   void initState() {
     super.initState();
+    // Initialize camera controller with default settings
     _scannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.normal,
       facing: CameraFacing.back,
@@ -47,11 +49,12 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
 
   @override
   void dispose() {
-    _scannerController.dispose();
+    _scannerController.dispose(); // Clean up camera resources
     super.dispose();
   }
   
 
+  // Process scanned QR code data and navigate to exhibit page
   Future<void> _processQRCode(String qrData) async {
     // Prevent processing multiple QR codes at once
     if (_isProcessing) return;
@@ -67,17 +70,16 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
       final exhibitId = data['exhibit_id'] as int;
       final roomId = data['room_id'] as int? ?? 1; // Default to room 1 if not specified
       
-      // Register the scan
+      // Register the scan in database
       await widget.visitorDao.recordQRScan(
         sessionId: widget.sessionId,
-        //roomId: roomId,
         exhibitId: exhibitId,
       );
 
-      // Get exhibit details
+      // Get exhibit details from database
       final exhibitDetails = await widget.visitorDao.getExhibitDetails(exhibitId);
 
-      if (!mounted) return;
+      if (!mounted) return; // Check if widget is still in tree
 
       if (exhibitDetails != null) {
         // Navigate to exhibit info page
@@ -101,6 +103,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
           });
         }
       } else {
+        // Exhibit not found
         _showErrorDialog('${'exhibit_notfound'.tr} (ID: $exhibitId)'.tr);
         setState(() {
           _isProcessing = false;
@@ -108,6 +111,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
         });
       }
     } catch (e) {
+      // Invalid QR code format
       if (mounted) {
         _showErrorDialog('${'qrcode_invalid'.tr }: ${e.toString()}');
         setState(() {
@@ -118,6 +122,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     }
   }
 
+  // Show error dialog for invalid QR codes or exhibit not found
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -135,10 +140,12 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     );
   }
 
+  // Toggle camera flash on/off
   void _toggleTorch() {
     _scannerController.toggleTorch();
   }
 
+  // Navigate to browse page with itineraries and favorites
   void _navigateToBrowsePage() {
     Navigator.push(
       context,
@@ -153,6 +160,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     );
   }
 
+  // Show dialog for manual exhibit ID input
   void _showManualInputDialog() {
     final TextEditingController idController = TextEditingController();
     
@@ -201,6 +209,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
             ],
           ),
           actions: [
+            // Cancel button
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
@@ -208,6 +217,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                 style: TextStyle(color: Colors.grey[400]),
               ),
             ),
+            // Submit button
             ElevatedButton(
               onPressed: () {
                 final id = int.tryParse(idController.text);
@@ -217,6 +227,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                   final qrData = '{"exhibit_id": $id, "room_id": 1}';
                   _processQRCode(qrData);
                 } else {
+                  // Invalid number input
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('enter_validNbr'.tr),
@@ -258,6 +269,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          // Flash toggle button
           IconButton(
             icon: const Icon(
               Icons.flash_off,
@@ -266,9 +278,10 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
             onPressed: _toggleTorch,
             tooltip: 'toggle_flash'.tr,
           ),
-          const LanguageSelector(), // Language selector added here
+          const LanguageSelector(), // Language selector in app bar
         ],
       ),
+      // Browse button floating action button
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToBrowsePage,
         backgroundColor: Colors.purple[700],
@@ -282,7 +295,8 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
       body: ListenableBuilder(
           listenable: LanguageManager(), 
           builder: (context, builder) => _isLoading
-          ? Center(
+          ? // Loading state when processing QR code
+          Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -300,35 +314,36 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                 ],
               ),
             )
-          : Stack(
+          : // Main scanning interface
+          Stack(
               children: [
-                // Camera view
+                // Camera view for QR scanning
                 MobileScanner(
                   controller: _scannerController,
                   onDetect: (capture) {
-                    if (_isProcessing) return;
+                    if (_isProcessing) return; // Prevent multiple processing
                     
                     final List<Barcode> barcodes = capture.barcodes;
                     for (final barcode in barcodes) {
                       if (barcode.rawValue != null) {
                         _processQRCode(barcode.rawValue!);
-                        break;
+                        break; // Process first valid QR code
                       }
                     }
                   },
                 ),
                 
-                // Overlay with gradient
+                // Overlay gradient for better visibility
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.7),
+                        Colors.black.withOpacity(0.7), // Top gradient
                         Colors.transparent,
                         Colors.transparent,
-                        Colors.black.withOpacity(0.7),
+                        Colors.black.withOpacity(0.7), // Bottom gradient
                       ],
                       stops: const [0.0, 0.3, 0.7, 1.0],
                     ),
@@ -339,7 +354,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                   children: [
                     const SizedBox(height: 40),
                     
-                    // Instructions
+                    // Instructions overlay
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 24),
                       padding: const EdgeInsets.all(16),
@@ -380,7 +395,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                     
                     const Spacer(),
                     
-                    // Scanning frame
+                    // Scanning frame (visual guide for QR placement)
                     Center(
                       child: Container(
                         width: 280,
@@ -397,7 +412,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                             // Animated scanning line
                             const AnimatedScanLine(),
                             
-                            // Corner decorations
+                            // Corner decorations for better visibility
                             Positioned(
                               top: -2,
                               left: -2,
@@ -473,7 +488,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                     
                     const Spacer(),
                     
-                    // Manual input button
+                    // Manual input button (alternative to QR scanning)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 40),
                       child: TextButton.icon(
@@ -494,7 +509,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                     ),
                     const SizedBox(height: 8),
                     
-                    // Session info at bottom
+                    // Session info display at bottom
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -532,7 +547,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
   }
 }
 
-// Animated scanning line widget
+// Animated scanning line widget for visual feedback
 class AnimatedScanLine extends StatefulWidget {
   const AnimatedScanLine({super.key});
 
@@ -548,10 +563,11 @@ class _AnimatedScanLineState extends State<AnimatedScanLine>
   @override
   void initState() {
     super.initState();
+    // Create animation controller for continuous scanning line movement
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat(reverse: true);
+    )..repeat(reverse: true); // Loop animation
 
     _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
   }
@@ -568,7 +584,7 @@ class _AnimatedScanLineState extends State<AnimatedScanLine>
       animation: _animation,
       builder: (context, child) {
         return Positioned(
-          top: _animation.value * 250,
+          top: _animation.value * 250, // Animated vertical position
           left: 20,
           right: 20,
           child: Container(
@@ -577,7 +593,7 @@ class _AnimatedScanLineState extends State<AnimatedScanLine>
               gradient: LinearGradient(
                 colors: [
                   Colors.transparent,
-                  Colors.purple[300]!,
+                  Colors.purple[300]!, // Center highlight
                   Colors.transparent,
                 ],
               ),
