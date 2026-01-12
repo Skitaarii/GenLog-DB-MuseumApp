@@ -9,7 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:editor_app/utils/qr_code_helper.dart';
 import 'package:image_picker/image_picker.dart';  
 import 'dart:typed_data';                          
-import 'dart:io';      
+import 'dart:io';  
+import 'package:share_plus/share_plus.dart';    
 
 
 final DateFormat _dateFormatter = DateFormat('dd.MM.yyyy');
@@ -1177,31 +1178,58 @@ class _EditorsExhibitsPageState extends State<EditorsExhibitsPage> {
                                 tooltip: 'Download QR Code',
                                 onPressed: () async {
                                   try {
-                                    // Directly download the QR code for this exhibit
-                                    final success = await QRCodeHelper.downloadQRCode(
-                                      exhibit_id: e.exhibit_id,
-                                    // roomId not needed anymore
-                                      exhibitTitle: e.title,
-                                    );
-
-                                    if (!success) {
+                                    // Get all rooms this exhibit is in
+                                    final rooms = await widget.exhibitDao.getExhibitRooms(e.exhibit_id);
+                                    
+                                    if (rooms.isEmpty) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          content: Text('Failed to save QR code for "${e.title}"'),
+                                          content: Text('Exhibit "${e.title}" is not assigned to any room'),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    
+                                    // Generate all QR codes first (collect them)
+                                    List<XFile> qrFiles = [];
+                                    for (final room in rooms) {
+                                      final file = await QRCodeHelper.generateQRCodeFile(
+                                        exhibit_id: e.exhibit_id,
+                                        roomId: room.room_id,
+                                        exhibitTitle: e.title,
+                                        roomName: room.name,
+                                      );
+                                      if (file != null) {
+                                        qrFiles.add(file);
+                                      }
+                                    }
+                                    
+                                    if (qrFiles.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Failed to generate QR codes for "${e.title}"'),
                                           backgroundColor: Colors.red,
                                         ),
                                       );
+                                      return;
                                     }
+                                    
+                                    // Share all QR codes together
+                                    await Share.shareXFiles(
+                                      qrFiles,
+                                      text: 'QR codes for "${e.title}" (${qrFiles.length} rooms)',
+                                    );
+                                    
                                   } catch (err) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Error generating QR for "${e.title}": $err'),
+                                        content: Text('Error generating QR codes: $err'),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
                                   }
                                 }
-
                               ),
                             ),
 

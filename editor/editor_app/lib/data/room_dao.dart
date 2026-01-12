@@ -47,12 +47,6 @@ Future<void> updateRoomExhibits(int roomId, List<int> exhibitIds) async {
   );
 
   for (final exhibitId in exhibitIds) {
-    // Ensure exhibit is not linked to any other room
-    await connection.execute(
-      'DELETE FROM Room_Exhibit WHERE exhibit_id = @exhibitId',
-      substitutionValues: {'exhibitId': exhibitId},
-    );
-
     // Insert the unique association
     await connection.execute(
       '''

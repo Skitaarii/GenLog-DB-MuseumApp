@@ -7,11 +7,13 @@ import 'package:qr_flutter/qr_flutter.dart';
 class QRCodeGenerator {
   /// Generate QR code image as PNG bytes
   static Future<Uint8List> generateQRCodeImage(
-    int exhibitId, {
+    int exhibitId,
+    int roomId, {
     int size = 512,
   }) async {
     final qrData = jsonEncode({
       'exhibit_id': exhibitId,
+      'room_id': roomId,
     });
 
     final qrPainter = QrPainter(
@@ -34,12 +36,17 @@ class QRCodeGenerator {
     return byteData!.buffer.asUint8List();
   }
 
-  static String getQRCodeFilename(String exhibitTitle) {
+  static String getQRCodeFilename(String exhibitTitle, String roomName) {
     final cleanTitle = exhibitTitle
         .replaceAll(RegExp(r'[^\w\s-]'), '')
         .replaceAll(RegExp(r'\s+'), '_')
         .toLowerCase();
+    
+    final cleanRoom = roomName
+        .replaceAll(RegExp(r'[^\w\s-]'), '')
+        .replaceAll(RegExp(r'\s+'), '_')
+        .toLowerCase();
 
-    return 'qr_exhibit_$cleanTitle.png';
+    return 'qr_${cleanRoom}_${cleanTitle}.png';
   }
 }

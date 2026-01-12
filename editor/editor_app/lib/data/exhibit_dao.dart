@@ -21,6 +21,16 @@ class ExhibitImage {
   });
 }
 
+class Room {
+  final int room_id;
+  final String name;
+
+  Room({
+    required this.room_id,
+    required this.name,
+  });
+}
+
 class ExhibitDao {
   final PostgreSQLConnection connection;
 
@@ -198,4 +208,21 @@ Future<int> getOrCreateLongDescId(String text) async {
       substitutionValues: {'id': imageId},
     );
   }
+
+  Future<List<Room>> getExhibitRooms(int exhibitId) async {
+  final result = await connection.query(
+    '''
+    SELECT r.room_id, r.name 
+    FROM Room r
+    JOIN Room_Exhibit re ON r.room_id = re.room_id
+    WHERE re.exhibit_id = @exhibitId
+    ''',
+    substitutionValues: {'exhibitId': exhibitId},
+  );
+  
+  return result.map((row) => Room(
+    room_id: row[0] as int,
+    name: row[1] as String,
+  )).toList();
+}
 }
