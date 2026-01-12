@@ -199,13 +199,6 @@ class ExhibitDao {
 }
 
 
-
-
-
-
-
-
-
   /// Gets raw exhibit data by ID (returns PostgreSQL rows)
   Future<List<List<dynamic>>> getExhibitById(int id) async {
     return await connection.query(
