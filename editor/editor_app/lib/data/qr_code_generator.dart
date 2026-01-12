@@ -17,12 +17,14 @@ class QRCodeGenerator {
   /// 
   /// Returns: PNG image bytes ready for saving or sharing
   static Future<Uint8List> generateQRCodeImage(
-    int exhibitId, {
+    int exhibitId,
+    int roomId, {
     int size = 512,
   }) async {
     // Create JSON structure containing exhibit ID
     final qrData = jsonEncode({
       'exhibit_id': exhibitId,
+      'room_id': roomId,
     });
 
     // Configure QR code painter with optimal settings
@@ -49,6 +51,7 @@ class QRCodeGenerator {
     return byteData!.buffer.asUint8List();
   }
 
+  static String getQRCodeFilename(String exhibitTitle, String roomName) {
   /// Generate a clean filename for QR code image
   /// Removes special characters and spaces from exhibit title
   /// 
@@ -56,13 +59,18 @@ class QRCodeGenerator {
   /// - `exhibitTitle`: Original exhibit title
   /// 
   /// Returns: Sanitized filename (e.g., 'qr_exhibit_mona_lisa.png')
-  static String getQRCodeFilename(String exhibitTitle) {
+
     // Remove special characters, replace spaces with underscores, convert to lowercase
     final cleanTitle = exhibitTitle
-        .replaceAll(RegExp(r'[^\w\s-]'), '')    // Remove special chars except spaces and hyphens
-        .replaceAll(RegExp(r'\s+'), '_')        // Replace spaces with underscores
-        .toLowerCase();                         // Convert to lowercase for consistency
+        .replaceAll(RegExp(r'[^\w\s-]'), '')
+        .replaceAll(RegExp(r'\s+'), '_')
+        .toLowerCase();
+    
+    final cleanRoom = roomName
+        .replaceAll(RegExp(r'[^\w\s-]'), '')
+        .replaceAll(RegExp(r'\s+'), '_')
+        .toLowerCase();
 
-    return 'qr_exhibit_$cleanTitle.png';
+    return 'qr_${cleanRoom}_${cleanTitle}.png';
   }
 }

@@ -188,6 +188,7 @@ class VisitorDao {
   // Record a QR scan event in the database
   Future<bool> recordQRScan({
     required int sessionId,
+    required int roomId,
     required int exhibitId,
   }) async {
     try {
@@ -223,7 +224,6 @@ class VisitorDao {
         'exhibitId': exhibitId,
         'scannedAt': DateTime.now(),
       });
-      
       return true;
     } catch (e) {
       print('Error recording QR scan: $e');

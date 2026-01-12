@@ -21,6 +21,16 @@ class ExhibitImage {
   });
 }
 
+class Room {
+  final int room_id;
+  final String name;
+
+  Room({
+    required this.room_id,
+    required this.name,
+  });
+}
+
 /// DAO for exhibit management including multilingual descriptions and images
 /// WARNING: Current description system only supports English
 class ExhibitDao {
@@ -121,20 +131,79 @@ class ExhibitDao {
     );
   }
 
-  /// Permanently deletes an exhibit (cascades to related images)
+  /// Permanently deletes an exhibit (cascades to all related table)
   Future<void> deleteExhibit(int exhibitId) async {
-  // Supprimer d'abord les images
-  await connection.query(
-    'DELETE FROM images WHERE exhibit_id = @id',
+  final conn = connection;
+
+  await conn.query(
+    '''
+    DELETE FROM TagEra 
+    WHERE tag_id IN (SELECT tag_id FROM Tags WHERE exhibit_id = @id)
+    ''',
     substitutionValues: {'id': exhibitId},
   );
 
-  // Supprimer ensuite l'exhibit
-  await connection.query(
-    'DELETE FROM exhibits WHERE exhibit_id = @id',
+  await conn.query(
+    '''
+    DELETE FROM TagTheme
+    WHERE tag_id IN (SELECT tag_id FROM Tags WHERE exhibit_id = @id)
+    ''',
     substitutionValues: {'id': exhibitId},
   );
+
+  await conn.query(
+    'DELETE FROM Tags WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
+  await conn.query(
+    'DELETE FROM Room_Exhibit WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
+  await conn.query(
+    'DELETE FROM Itinerary_Exhibit WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
+  await conn.query(
+    'DELETE FROM QR_Scan WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
+  await conn.query(
+    'DELETE FROM Feedback WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
+  await conn.query(
+    'DELETE FROM Related_exhibits WHERE exhibit1_id = @id OR exhibit2_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
+  await conn.query(
+    'DELETE FROM Favorites WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
+  await conn.query(
+    'DELETE FROM Images WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
+  await conn.query(
+    'DELETE FROM Exhibits WHERE exhibit_id = @id',
+    substitutionValues: {'id': exhibitId},
+  );
+
 }
+
+
+
+
+
+
+
 
 
   /// Gets raw exhibit data by ID (returns PostgreSQL rows)
@@ -213,4 +282,21 @@ class ExhibitDao {
       substitutionValues: {'id': imageId},
     );
   }
+
+  Future<List<Room>> getExhibitRooms(int exhibitId) async {
+  final result = await connection.query(
+    '''
+    SELECT r.room_id, r.name 
+    FROM Room r
+    JOIN Room_Exhibit re ON r.room_id = re.room_id
+    WHERE re.exhibit_id = @exhibitId
+    ''',
+    substitutionValues: {'exhibitId': exhibitId},
+  );
+  
+  return result.map((row) => Room(
+    room_id: row[0] as int,
+    name: row[1] as String,
+  )).toList();
+}
 }

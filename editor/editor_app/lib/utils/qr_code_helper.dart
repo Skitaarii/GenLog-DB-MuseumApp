@@ -11,19 +11,50 @@ import 'package:share_plus/share_plus.dart';
 import 'package:editor_app/data/qr_code_generator.dart';
 
 class QRCodeHelper {
+
+    static Future<XFile?> generateQRCodeFile({
+    required int exhibit_id,
+    required int roomId,
+    required String exhibitTitle,
+    required String roomName,
+  }) async {
+    try {
+      final qrBytes = await QRCodeGenerator.generateQRCodeImage(
+        exhibit_id,
+        roomId,
+      );
+      
+      final filename = QRCodeGenerator.getQRCodeFilename(exhibitTitle, roomName);
+      
+      // Save to temp directory
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$filename');
+      await file.writeAsBytes(qrBytes);
+      
+      return XFile(file.path);
+    } catch (e) {
+      print('Error generating QR code file: $e');
+      return null;
+    }
+  }
+  
+  
   // Download and optionally share QR code for an exhibit
   // Returns true if operation was successful, false otherwise
   static Future<bool> downloadQRCode({
     required int exhibit_id,
+    required int roomId,
     required String exhibitTitle,
+    required String roomName,
   }) async {
     try {
       // Generate QR code image from exhibit ID only
       final Uint8List qrBytes =
-          await QRCodeGenerator.generateQRCodeImage(exhibit_id);
+          await QRCodeGenerator.generateQRCodeImage(exhibit_id,roomId);
 
-      // Create filename based on exhibit title
-      final filename = QRCodeGenerator.getQRCodeFilename(exhibitTitle);
+      final filename = QRCodeGenerator.getQRCodeFilename(
+        exhibitTitle, roomName
+      );
 
       // ─────────────────────────────────────────────────────────────
       // DESKTOP PLATFORMS (Windows / Linux / macOS)

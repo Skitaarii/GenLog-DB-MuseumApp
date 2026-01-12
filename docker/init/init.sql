@@ -55,8 +55,7 @@ CREATE TABLE Room_Exhibit (
   exhibit_id INT,
   FOREIGN KEY (room_id) REFERENCES Room(room_id),
   FOREIGN KEY (exhibit_id) REFERENCES Exhibits(exhibit_id), 
-  PRIMARY KEY (id),
-  UNIQUE (exhibit_id)
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE Images (
