@@ -5,6 +5,7 @@
 import 'package:postgres/postgres.dart';
 import 'package:visitor_app/data/itinerary.dart';
 import 'package:visitor_app/data/exhibit.dart';
+import 'package:visitor_app/utils/language_manager.dart';
 
 class ItineraryDao {
   final PostgreSQLConnection connection;
@@ -31,47 +32,54 @@ class ItineraryDao {
   }
 
   // Get all itineraries with their associated exhibits
-  Future<List<ItineraryWithExhibits>> getItinerariesWithExhibits() async {
-    try {
-      final result = await connection.query('''
-        SELECT i.itinerary_id, i.title, e.exhibit_id, e.title
-        FROM itineraries i
-        LEFT JOIN itinerary_exhibit ie ON ie.itinerary_id = i.itinerary_id
-        LEFT JOIN exhibits e ON e.exhibit_id = ie.exhibit_id
-        ORDER BY i.itinerary_id, ie.exhibit_order
-      ''');
+Future<List<ItineraryWithExhibits>> getItinerariesWithExhibits() async {
+  try {
+    final langColumn = LanguageManager().dbColumnName; // FR / EN / IT / DE
 
-      final Map<int, ItineraryWithExhibits> itineraries = {};
+    final result = await connection.query('''
+      SELECT
+        i.itinerary_id,
+        i.title_$langColumn,
+        e.exhibit_id,
+        e.title
+      FROM itineraries i
+      LEFT JOIN itinerary_exhibit ie ON ie.itinerary_id = i.itinerary_id
+      LEFT JOIN exhibits e ON e.exhibit_id = ie.exhibit_id
+      ORDER BY i.itinerary_id, ie.exhibit_order
+    ''');
 
-      for (final row in result) {
-        final itineraryId = row[0] as int;
-        final itineraryTitle = row[1] as String;
+    final Map<int, ItineraryWithExhibits> itineraries = {};
 
-        itineraries.putIfAbsent(
-          itineraryId,
-          () => ItineraryWithExhibits(
-            itinerary_id: itineraryId,
-            title: itineraryTitle,
-            exhibits: [],
+    for (final row in result) {
+      final itineraryId = row[0] as int;
+      final itineraryTitle = row[1] as String;
+
+      itineraries.putIfAbsent(
+        itineraryId,
+        () => ItineraryWithExhibits(
+          itinerary_id: itineraryId,
+          title: itineraryTitle,
+          exhibits: [],
+        ),
+      );
+
+      if (row[2] != null) {
+        itineraries[itineraryId]!.exhibits.add(
+          ExhibitLite(
+            exhibit_id: row[2] as int,
+            title: row[3] as String,
           ),
         );
-
-        if (row[2] != null) {
-          itineraries[itineraryId]!.exhibits.add(
-            ExhibitLite(
-              exhibit_id: row[2] as int,
-              title: row[3] as String,
-            ),
-          );
-        }
       }
-
-      return itineraries.values.toList();
-    } catch (e) {
-      print('Error fetching itineraries with exhibits: $e');
-      return [];
     }
+
+    return itineraries.values.toList();
+  } catch (e) {
+    print('Error fetching itineraries with exhibits: $e');
+    return [];
   }
+}
+
 
   // Get a specific itinerary with its exhibits
   Future<ItineraryWithExhibits?> getItineraryById(int itineraryId) async {

@@ -247,9 +247,12 @@ class AdminDao {
         ''',
         //Itineraries
         '''
-        CREATE TABLE IF NOT EXISTS Itineraries (
+        CREATE TABLE Itineraries (
           itinerary_id SERIAL,
-          title VARCHAR(50),
+          title_FR VARCHAR(100),
+          title_EN VARCHAR(100),
+          title_IT VARCHAR(100),
+          title_DE VARCHAR(100),
           PRIMARY KEY (itinerary_id)
         );
         ''',
@@ -662,19 +665,26 @@ class AdminDao {
       final itineraryIds = <int>[];
 
       final itineraries = [
-        'Chef-d\'œuvres incontournables',
-        'Voyage dans l\'Antiquité',
-        'Science & Futur',
+        // [FR, EN, IT, DE]
+        ['Chef-d\'œuvres incontournables', 'Must-See Masterpieces', 'Capolavori imperdibili', 'Unverzichtbare Meisterwerke'],
+        ['Voyage dans l\'Antiquité', 'Journey through Antiquity', 'Viaggio nell\'Antichità', 'Reise durch die Antike'],
+        ['Science & Futur', 'Science & Future', 'Scienza e Futuro', 'Wissenschaft & Zukunft'],
       ];
+
 
       for (final title in itineraries) {
         final result = await connection.query(
           '''
-          INSERT INTO Itineraries (title)
-          VALUES (@title)
+          INSERT INTO Itineraries (title_FR, title_EN, title_IT, title_DE)
+          VALUES (@fr, @en, @it, @de)
           RETURNING itinerary_id
           ''',
-          substitutionValues: {'title': title},
+          substitutionValues: {
+            'fr': title[0],
+            'en': title[1],
+            'it': title[2],
+            'de': title[3],
+          },
         );
         itineraryIds.add(result.first[0] as int);
       }

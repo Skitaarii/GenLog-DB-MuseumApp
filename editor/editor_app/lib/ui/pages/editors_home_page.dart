@@ -45,18 +45,6 @@ class EditorsHomePage extends StatelessWidget {
               border: Border.all(color: Colors.purple[300]!),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: TextButton(
-              onPressed: () {
-                // plus tard : switch EN / FR / IT / DE
-              },
-              child: const Text(
-                'EN / FR',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                ),
-              ),
-            ),
           ),
         ],
       ),

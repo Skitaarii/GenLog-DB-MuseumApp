@@ -343,7 +343,7 @@ Future<double> getExhibitAverageRating(int exhibitId) async {
     Future<List<ExhibitImage>> getExhibitImages(int exhibitId) async {
     final result = await connection.query(
       '''
-      SELECT image_id, img_data, alt_text
+      SELECT image_id, img_path, alt_text
       FROM images
       WHERE exhibit_id = @exhibit_id
       ORDER BY image_id
